@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "712511258077",
+    "project_id": "passport-s0989374",
+    "storage_bucket": "passport-s0989374.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:712511258077:android:3e40302a1a38d394a34a34",
+        "android_client_info": {
+          "package_name": "com.sayists.passport"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "712511258077-k0q7rflurlo83m12abrm6fmkvavm6f1a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sayists.passport",
+            "certificate_hash": "91c22a7649fd83a6ae8c01eca53587ab964f0927"
+          }
+        },
+        {
+          "client_id": "712511258077-1v2njfks16qmie65e0f704hrql97lo1j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOFAoaQAjnGo_LeSK0uBHL8IR_sAeyz7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "712511258077-1v2njfks16qmie65e0f704hrql97lo1j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "712511258077-mpu6rpug3v91g08gj82bk7ucrl5kbo4n.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sayists.Passport"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
