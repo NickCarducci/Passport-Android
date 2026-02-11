@@ -29,6 +29,7 @@ play-services = { group = "com.google.android.gms", name = "play-services-base",
 play-integrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore-ktx" }
 
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

@@ -1,82 +1,298 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/focalContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     tools:context=".MainActivity">
 
-
+    <!-- PROFILE VIEW (left underlay) -->
     <LinearLayout
-        android:id="@+id/linearLayout"
+        android:id="@+id/profileView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:layout_marginTop="50dp">
+        android:background="?attr/colorSurface">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Profile"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp" />
+
+        <!-- Student ID -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Student ID"
+                android:textSize="15sp"
+                android:textColor="?attr/colorOnSurface" />
+
+            <TextView
+                android:id="@+id/studentIdTv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="?attr/colorOnSurface"
+                android:alpha="0.6" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutline"
+            android:alpha="0.2"
+            android:layout_marginHorizontal="16dp" />
+
+        <!-- Username -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <EditText
+                android:id="@+id/et_username"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Set display username"
+                android:inputType="textCapWords"
+                android:textSize="15sp"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/saveUsernameBtn"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutline"
+            android:alpha="0.2"
+            android:layout_marginHorizontal="16dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Logout -->
+        <Button
+            android:id="@+id/logOutBtn"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textColor="@android:color/holo_red_dark"
+            android:layout_gravity="start"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="32dp" />
+    </LinearLayout>
+
+    <!-- EVENTS VIEW (center hub / focal point) -->
+    <LinearLayout
+        android:id="@+id/eventsView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="?attr/colorSurface">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <ImageButton
+                android:id="@+id/profileNavBtn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_myplaces"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Profile"
+                android:scaleType="centerInside" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Events"
+                android:textAlignment="center"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface" />
+
+            <ImageButton
+                android:id="@+id/leaderboardNavBtn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Leaderboard"
+                android:scaleType="centerInside" />
+        </LinearLayout>
+
+        <!-- Events list -->
         <ListView
             android:id="@+id/eventlist"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"></ListView>
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingHorizontal="8dp"
+            android:clipToPadding="false" />
+
+        <!-- Bottom hint -->
+        <TextView
+            android:id="@+id/pullHintTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pull up to scan"
+            android:textAlignment="center"
+            android:textSize="12sp"
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.4"
+            android:paddingVertical="12dp" />
     </LinearLayout>
 
+    <!-- LEADERBOARD VIEW (right underlay) -->
     <LinearLayout
+        android:id="@+id/leaderboardView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="?attr/colorSurface">
+
         <TextView
-            android:id="@+id/scannedValueTv"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            android:text=""
-            android:textColor="@color/black"
-            android:textSize="20sp"
+            android:text="Leaderboard"
+            android:textSize="24sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:textColor="?attr/colorOnSurface"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp" />
+
+        <ListView
+            android:id="@+id/leaderList"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingHorizontal="8dp" />
     </LinearLayout>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:weightSum="3"
-        android:layout_width="wrap_content"
+    <!-- SCANNER VIEW (bottom underlay) -->
+    <FrameLayout
+        android:id="@+id/scannerView"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="bottom|center_horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        >
-        <Button
-            android:id="@+id/logOutBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp"
-            android:text="Logout"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5" />
-        <Button
-            android:id="@+id/scanQrBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:text="Scan Qr"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5" />
-        <Button
-            android:id="@+id/leaderboardBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="10dp"
-            android:text="Leaders"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5" />
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:background="@android:color/black">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- Top bar -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="12dp">
+
+                <ImageButton
+                    android:id="@+id/listNavBtn"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@android:drawable/ic_menu_revert"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Back to events"
+                    android:scaleType="centerInside" />
+
+                <TextView
+                    android:id="@+id/scannerTitleTv"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Scan QR Code"
+                    android:textAlignment="center"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+
+                <View
+                    android:layout_width="48dp"
+                    android:layout_height="48dp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Scan prompt -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tap to launch scanner"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"
+                android:alpha="0.6"
+                android:textSize="14sp"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/scanQrBtn"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="Scan QR"
+                android:layout_marginBottom="48dp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- FLOATING NAV BUTTON (chrome layer - always on top) -->
+    <TextView
+        android:id="@+id/floatingNavBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:text="scan"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorPrimary"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:layout_marginBottom="16dp"
+        android:background="?attr/selectableItemBackground"
+        android:elevation="8dp" />
+
+</FrameLayout>

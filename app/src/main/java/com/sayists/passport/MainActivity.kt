@@ -1,12 +1,18 @@
 package com.sayists.passport
 
-//import com.google.firebase.Firebase
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.animation.DecelerateInterpolator
+import android.widget.AbsListView
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
@@ -17,200 +23,601 @@ import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanner
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
+import java.net.URL
+import kotlin.math.abs
 
+// data class Event(val title: String = "", val location: String = "", val date: String = "")
 
-data class Event(val title: String = "", val location: String = "", val date: String = "")
-
+/**
+ * Focal Architecture: Single activity with 4 panels navigated by gestures.
+ *
+ * Layout (matching iOS ContentView):
+ *   Profile  <--swipe-->  Events (hub)  <--swipe-->  Leaderboard
+ *                            |
+ *                       pull up/down
+ *                            |
+ *                         Scanner
+ */
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var leaderboardBtn: Button
-    private lateinit var logOutBtn: Button
-    private lateinit var scanQrBtn: Button
-    private lateinit var scannedValueTv: TextView
-    private var isScannerInstalled = false
+    // --- Navigation state ---
+    enum class ViewMode { LIST, PROFILE, LEADERBOARD, SCANNER }
+    enum class DragDirection { NONE, HORIZONTAL, VERTICAL }
+
+    private var currentMode = ViewMode.LIST
+    private var dragDirection = DragDirection.NONE
+    private var gestureStarted = false
+    private var isDragIntercepted = false
+    private var cancelSentToChildren = false
+    private var horizontalOffset = 0f
+    private var verticalOffset = 0f
+    private var startX = 0f
+    private var startY = 0f
+    private var isAtBottom = false
+    private var touchSlop = 0
+    private var isAnimating = false
+
+    // Gesture state manager (tap-through prevention)
+    private var isDragging = false
+    private var lastGestureEndTime = 0L
+
+    // --- View references ---
+    private lateinit var profilePanel: View
+    private lateinit var eventsPanel: View
+    private lateinit var leaderboardPanel: View
+    private lateinit var scannerPanel: View
+    private lateinit var floatingNavBtn: TextView
+
+    // --- Scanner ---
     private lateinit var scanner: GmsBarcodeScanner
-    //val db = Firebase.firestore
-    private val client = OkHttpClient()
-    val db = FirebaseFirestore.getInstance()
+
+    // --- Data ---
+    private val db = FirebaseFirestore.getInstance()
+    private val descriptionLinks = ArrayList<String>()
+
+    // ========================================================================
+    // Lifecycle
+    // ========================================================================
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+
+        touchSlop = ViewConfiguration.get(this).scaledTouchSlop
+
+        // Panels
+        profilePanel = findViewById(R.id.profileView)
+        eventsPanel = findViewById(R.id.eventsView)
+        leaderboardPanel = findViewById(R.id.leaderboardView)
+        scannerPanel = findViewById(R.id.scannerView)
+        floatingNavBtn = findViewById(R.id.floatingNavBtn)
+
+        // Edge-to-edge insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.focalContainer)) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             insets
         }
-        installGoogleScanner()
-        initVars()
-        registerUiListener()
 
+        // Scanner setup
+        val options = GmsBarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            .enableAutoZoom()
+            .build()
+        scanner = GmsBarcodeScanning.getClient(this, options)
+
+        val moduleInstallRequest = ModuleInstallRequest.newBuilder()
+            .addApi(GmsBarcodeScanning.getClient(this))
+            .build()
+        ModuleInstall.getClient(this).installModules(moduleInstallRequest)
+
+        // Back button (modern API)
+        onBackPressedDispatcher.addCallback(this,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (currentMode != ViewMode.LIST) {
+                        animateToMode(ViewMode.LIST)
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            }
+        )
+
+        setupEventsList()
+        setupLeaderboard()
+        setupProfile()
+        setupScanner()
+        setupNavButtons()
+
+        // Initial positioning (no animation)
+        positionViewsImmediate(ViewMode.LIST)
+    }
+
+    // ========================================================================
+    // Gesture Handling — Focal Architecture
+    // ========================================================================
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (isAnimating) return super.dispatchTouchEvent(ev)
+
+        when (ev.action) {
+            MotionEvent.ACTION_DOWN -> {
+                startX = ev.rawX
+                startY = ev.rawY
+                gestureStarted = false
+                isDragIntercepted = false
+                cancelSentToChildren = false
+                dragDirection = DragDirection.NONE
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (!isDragIntercepted) {
+                    val dx = ev.rawX - startX
+                    val dy = ev.rawY - startY
+
+                    // Jitter-resistant latch: wait for meaningful movement (> touchSlop)
+                    if (!gestureStarted && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
+                        gestureStarted = true
+
+                        // Determine dominant direction and whether to intercept
+                        if (abs(dx) > abs(dy)) {
+                            dragDirection = DragDirection.HORIZONTAL
+                            isDragIntercepted = when (currentMode) {
+                                ViewMode.LIST -> true
+                                ViewMode.PROFILE -> dx < 0
+                                ViewMode.LEADERBOARD -> dx > 0
+                                ViewMode.SCANNER -> false
+                            }
+                        } else {
+                            dragDirection = DragDirection.VERTICAL
+                            isDragIntercepted = when (currentMode) {
+                                ViewMode.LIST -> isAtBottom && dy < 0
+                                ViewMode.SCANNER -> dy > 0
+                                else -> false
+                            }
+                        }
+
+                        if (isDragIntercepted) {
+                            isDragging = true
+                        }
+                    }
+                }
+
+                if (isDragIntercepted) {
+                    // Send cancel to children so ListView stops scrolling
+                    if (!cancelSentToChildren) {
+                        cancelSentToChildren = true
+                        val cancel = MotionEvent.obtain(ev)
+                        cancel.action = MotionEvent.ACTION_CANCEL
+                        super.dispatchTouchEvent(cancel)
+                        cancel.recycle()
+                    }
+
+                    val dx = ev.rawX - startX
+                    val dy = ev.rawY - startY
+
+                    when (dragDirection) {
+                        DragDirection.HORIZONTAL -> {
+                            horizontalOffset = dx
+                            verticalOffset = 0f
+                        }
+                        DragDirection.VERTICAL -> {
+                            horizontalOffset = 0f
+                            verticalOffset = dy
+                        }
+                        DragDirection.NONE -> {}
+                    }
+
+                    updateViewTranslations()
+                    return true
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (isDragIntercepted) {
+                    val dx = ev.rawX - startX
+                    val dy = ev.rawY - startY
+
+                    var newMode = currentMode
+
+                    if (dragDirection == DragDirection.HORIZONTAL) {
+                        when (currentMode) {
+                            ViewMode.LIST -> {
+                                if (dx < -100) newMode = ViewMode.LEADERBOARD
+                                else if (dx > 100) newMode = ViewMode.PROFILE
+                            }
+                            ViewMode.PROFILE -> {
+                                if (dx < -100) newMode = ViewMode.LIST
+                            }
+                            ViewMode.LEADERBOARD -> {
+                                if (dx > 100) newMode = ViewMode.LIST
+                            }
+                            else -> {}
+                        }
+                    } else if (dragDirection == DragDirection.VERTICAL) {
+                        when (currentMode) {
+                            ViewMode.LIST -> {
+                                if (isAtBottom && dy < -100) newMode = ViewMode.SCANNER
+                            }
+                            ViewMode.SCANNER -> {
+                                if (dy > 100) newMode = ViewMode.LIST
+                            }
+                            else -> {}
+                        }
+                    }
+
+                    endDrag(didNavigate = newMode != currentMode)
+                    animateToMode(newMode)
+                    return true
+                }
+            }
+        }
+
+        return super.dispatchTouchEvent(ev)
+    }
+
+    // ========================================================================
+    // View Positioning — Matching iOS offset logic
+    // ========================================================================
+
+    /**
+     * Translates all 4 panels based on [currentMode] + drag offsets.
+     *
+     * iOS mapping:
+     *   profileView.x  = (mode==profile ? 0 : -sw) + hOffset
+     *   listView.x     = (mode==profile ? sw : mode==leaderboard ? -sw : 0) + hOffset
+     *   listView.y     = (mode==scanner ? -sh : 0) + vOffset
+     *   leaderboard.x  = (mode==leaderboard ? 0 : sw) + hOffset
+     *   scanner.y      = (mode==scanner ? 0 : sh) + vOffset
+     */
+    private fun updateViewTranslations() {
+        val sw = resources.displayMetrics.widthPixels.toFloat()
+        val sh = resources.displayMetrics.heightPixels.toFloat()
+
+        profilePanel.translationX =
+            (if (currentMode == ViewMode.PROFILE) 0f else -sw) + horizontalOffset
+
+        eventsPanel.translationX = when (currentMode) {
+            ViewMode.PROFILE -> sw
+            ViewMode.LEADERBOARD -> -sw
+            else -> 0f
+        } + horizontalOffset
+
+        eventsPanel.translationY =
+            (if (currentMode == ViewMode.SCANNER) -sh else 0f) + verticalOffset
+
+        leaderboardPanel.translationX =
+            (if (currentMode == ViewMode.LEADERBOARD) 0f else sw) + horizontalOffset
+
+        scannerPanel.translationY =
+            (if (currentMode == ViewMode.SCANNER) 0f else sh) + verticalOffset
+    }
+
+    private fun positionViewsImmediate(mode: ViewMode = ViewMode.LIST) {
+        currentMode = mode
+        horizontalOffset = 0f
+        verticalOffset = 0f
+        updateViewTranslations()
+        updateFloatingNav()
+    }
+
+    private fun animateToMode(newMode: ViewMode) {
+        // Capture current pixel positions
+        data class Pos(val tx: Float, val ty: Float)
+
+        val starts = mapOf(
+            profilePanel to Pos(profilePanel.translationX, profilePanel.translationY),
+            eventsPanel to Pos(eventsPanel.translationX, eventsPanel.translationY),
+            leaderboardPanel to Pos(leaderboardPanel.translationX, leaderboardPanel.translationY),
+            scannerPanel to Pos(scannerPanel.translationX, scannerPanel.translationY)
+        )
+
+        // Calculate end positions
+        currentMode = newMode
+        horizontalOffset = 0f
+        verticalOffset = 0f
+        updateViewTranslations()
+
+        val ends = mapOf(
+            profilePanel to Pos(profilePanel.translationX, profilePanel.translationY),
+            eventsPanel to Pos(eventsPanel.translationX, eventsPanel.translationY),
+            leaderboardPanel to Pos(leaderboardPanel.translationX, leaderboardPanel.translationY),
+            scannerPanel to Pos(scannerPanel.translationX, scannerPanel.translationY)
+        )
+
+        // Animate from start to end
+        isAnimating = true
+        ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 300
+            interpolator = DecelerateInterpolator(2f)
+            addUpdateListener { anim ->
+                val p = anim.animatedValue as Float
+                for (view in listOf(profilePanel, eventsPanel, leaderboardPanel, scannerPanel)) {
+                    val s = starts[view]!!
+                    val e = ends[view]!!
+                    view.translationX = s.tx + (e.tx - s.tx) * p
+                    view.translationY = s.ty + (e.ty - s.ty) * p
+                }
+            }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    isAnimating = false
+                    updateFloatingNav()
+
+                    if (newMode == ViewMode.SCANNER) {
+                        launchScanner()
+                    }
+                }
+            })
+            start()
+        }
+    }
+
+    // ========================================================================
+    // Tap-Through Prevention (GestureStateManager equivalent)
+    // ========================================================================
+
+    private fun endDrag(@Suppress("UNUSED_PARAMETER") didNavigate: Boolean){
+        isDragging = false
+        lastGestureEndTime = System.currentTimeMillis()
+    }
+
+    private fun shouldBlockTaps(): Boolean {
+        if (isDragging) return true
+        val elapsed = System.currentTimeMillis() - lastGestureEndTime
+        return elapsed < 400
+    }
+
+    // ========================================================================
+    // Floating Nav Button (iOS backButton equivalent)
+    // ========================================================================
+
+    private fun updateFloatingNav() {
+        when (currentMode) {
+            ViewMode.SCANNER -> {
+                floatingNavBtn.visibility = View.GONE
+            }
+            ViewMode.LIST -> {
+                floatingNavBtn.visibility = View.VISIBLE
+                floatingNavBtn.text = getString(R.string.footer_scan)
+            }
+            else -> {
+                floatingNavBtn.visibility = View.VISIBLE
+                floatingNavBtn.text = getString(R.string.footer_back)
+            }
+        }
+    }
+
+    // ========================================================================
+    // Setup
+    // ========================================================================
+
+    private fun setupNavButtons() {
+        // Events header: profile / leaderboard
+        findViewById<ImageButton>(R.id.profileNavBtn).setOnClickListener {
+            if (!shouldBlockTaps()) animateToMode(ViewMode.PROFILE)
+        }
+        findViewById<ImageButton>(R.id.leaderboardNavBtn).setOnClickListener {
+            if (!shouldBlockTaps()) animateToMode(ViewMode.LEADERBOARD)
+        }
+
+        // Scanner: back to list
+        findViewById<ImageButton>(R.id.listNavBtn).setOnClickListener {
+            if (!shouldBlockTaps()) animateToMode(ViewMode.LIST)
+        }
+
+        // Floating nav (scan / back)
+        floatingNavBtn.setOnClickListener {
+            if (shouldBlockTaps()) return@setOnClickListener
+            when (currentMode) {
+                ViewMode.LIST -> animateToMode(ViewMode.SCANNER)
+                else -> animateToMode(ViewMode.LIST)
+            }
+        }
+    }
+
+    // --- Events List ---
+
+    private fun setupEventsList() {
+        val eventList = findViewById<ListView>(R.id.eventlist)
+
+        // Scroll position tracking for pull-up detection
+        eventList.setOnScrollListener(object : AbsListView.OnScrollListener {
+            override fun onScroll(
+                view: AbsListView, firstVisible: Int, visibleCount: Int, totalCount: Int
+            ) {
+                isAtBottom = totalCount > 0 && (firstVisible + visibleCount >= totalCount)
+            }
+            override fun onScrollStateChanged(view: AbsListView, scrollState: Int) {}
+        })
+
+        eventList.onItemClickListener = OnItemClickListener { _, _, position, _ ->
+            if (shouldBlockTaps()) return@OnItemClickListener
+            if (position < descriptionLinks.size) {
+                val url = descriptionLinks[position]
+                if (url.isNotEmpty()) {
+                    val intent = Intent(applicationContext, WebviewActivity::class.java)
+                    intent.putExtra("url", url)
+                    startActivity(intent)
+                }
+            }
+        }
+
+        loadEvents()
+    }
+
+    private fun loadEvents() {
         db.collection("events")
-            //.whereEqualTo("state", "CA")
             .addSnapshotListener { value, exception ->
                 if (exception != null) {
                     Toast.makeText(this, exception.message, Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
-                val descriptionLinks = ArrayList<String>()
+                descriptionLinks.clear()
                 val eventTitles = ArrayList<String>()
-                val events = ArrayList<Event>()
-                //var descriptionLink = ""
 
                 for (doc in value!!) {
-                    val event = doc.toObject(Event::class.java)
-                    events.add(event)
                     val date = doc.getString("date")
                     val title = doc.getString("title")
                     val location = doc.getString("location")
-                    //descriptionLink = doc.getString("descriptionLink") ?: ""
                     descriptionLinks.add(doc.getString("descriptionLink") ?: "")
-                    eventTitles.add(date + " " + title + ": " + location)
-
+                    eventTitles.add("$date $title: $location")
                 }
-                // access the listView from xml file
-                var mListView = findViewById<ListView>(R.id.eventlist)
-                val arrayAdapter: ArrayAdapter<*>
-                arrayAdapter = ArrayAdapter(this,
-                    android.R.layout.simple_list_item_1, eventTitles)
-                mListView.setOnItemClickListener(OnItemClickListener { adapter, v, position, arg3 ->
-                    val value = adapter.getItemAtPosition(position) as String
-                    val url = descriptionLinks.get(position) as String
-                    // assuming string and if you want to get the value on click of list item
-                    // do what you intend to do on click of listview row
-                    var intent = Intent(applicationContext, WebviewActivity::class.java)
-                    intent.putExtra("url", url)
 
-                    startActivity(intent)
-                    finish()
-                })
-                mListView.adapter = arrayAdapter
-                //Toast.makeText(this, "Current events at Monmouth U: $eventTitles", Toast.LENGTH_SHORT).show()
+                val mListView = findViewById<ListView>(R.id.eventlist)
+                mListView.adapter = ArrayAdapter(
+                    this, android.R.layout.simple_list_item_1, eventTitles
+                )
             }
     }
-    private fun installGoogleScanner() {
-        val moduleInstall = ModuleInstall.getClient(this)
-        val moduleInstallRequest = ModuleInstallRequest.newBuilder()
-            .addApi(GmsBarcodeScanning.getClient(this))
-            .build()
 
-        moduleInstall.installModules(moduleInstallRequest).addOnSuccessListener {
-            isScannerInstalled = true
-        }.addOnFailureListener {
-            isScannerInstalled = false
-            Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-        }
+    // --- Leaderboard ---
+
+    private fun setupLeaderboard() {
+        db.collection("leaders")
+            .orderBy("eventsAttended", Query.Direction.DESCENDING)
+            .addSnapshotListener { value, exception ->
+                if (exception != null) {
+                    Toast.makeText(this, exception.message, Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
+                }
+
+                val leaderNames = ArrayList<String>()
+                for (doc in value!!) {
+                    val username = doc.getString("username")
+                    val eventsAttended = doc.getLong("eventsAttended")
+                    leaderNames.add("$username: $eventsAttended")
+                }
+
+                val mListView = findViewById<ListView>(R.id.leaderList)
+                mListView.adapter = ArrayAdapter(
+                    this, android.R.layout.simple_list_item_1, leaderNames
+                )
+            }
     }
 
-    private fun initVars() {
-        leaderboardBtn = findViewById(R.id.leaderboardBtn)
-        logOutBtn = findViewById(R.id.logOutBtn)
-        scanQrBtn = findViewById(R.id.scanQrBtn)
-        scannedValueTv = findViewById(R.id.scannedValueTv)
-        scannedValueTv.text = "Scan a QR code"
-        val options = initializeGoogleScanner()
-        scanner = GmsBarcodeScanning.getClient(this, options)
-    }
+    // --- Profile ---
 
-    private fun initializeGoogleScanner(): GmsBarcodeScannerOptions {
-        return GmsBarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .enableAutoZoom().build()
-    }
+    private fun setupProfile() {
+        val user = FirebaseAuth.getInstance().currentUser
+        findViewById<TextView>(R.id.studentIdTv).text =
+            user?.email?.substringBefore("@") ?: "Not signed in"
 
-    private fun registerUiListener() {
-
-        scanQrBtn.setOnClickListener {
-            if (isScannerInstalled) {
-                startScanning()
+        // Save username
+        findViewById<Button>(R.id.saveUsernameBtn).setOnClickListener {
+            val username = findViewById<EditText>(R.id.et_username).text.trim().toString()
+            if (username.isNotEmpty()) {
+                user?.let {
+                    db.collection("leaders").document(it.uid)
+                        .update("username", username)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Username saved", Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                }
             } else {
-                Toast.makeText(this, "Please try again...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Enter a username", Toast.LENGTH_SHORT).show()
             }
         }
-        logOutBtn.setOnClickListener {
-            FirebaseAuth.getInstance().signOut();
+
+        // Logout
+        findViewById<Button>(R.id.logOutBtn).setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
             startActivity(Intent(applicationContext, LoginActivity::class.java))
             finish()
         }
-        leaderboardBtn.setOnClickListener {
-            startActivity(Intent(applicationContext, LeaderboardActivity::class.java))
-            finish()
+    }
+
+    // --- Scanner ---
+
+    private fun setupScanner() {
+        findViewById<Button>(R.id.scanQrBtn).setOnClickListener {
+            if (!shouldBlockTaps()) launchScanner()
         }
     }
 
-    private fun startScanning() {
-        scanner.startScan().addOnSuccessListener {
-            val result = it.rawValue
-            result?.let {
-                attendEventViaApi(it)
+    private fun launchScanner() {
+        scanner.startScan()
+            .addOnSuccessListener { barcode ->
+                barcode.rawValue?.let { attendEventViaApi(it) }
             }
-        }.addOnCanceledListener {
-            Toast.makeText(this, "Cancelled", Toast.LENGTH_SHORT).show()
-
-        }
+            .addOnCanceledListener {
+                animateToMode(ViewMode.LIST)
+            }
             .addOnFailureListener {
-                Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-
+                animateToMode(ViewMode.LIST)
             }
     }
+
+    // ========================================================================
+    // API
+    // ========================================================================
 
     private fun attendEventViaApi(eventId: String) {
         val user = FirebaseAuth.getInstance().currentUser ?: return
         val studentId = user.email?.substringBefore("@") ?: ""
-        
+
         val json = JSONObject().apply {
             put("eventId", eventId)
             put("studentId", studentId)
             put("fullName", user.displayName ?: "")
             put("username", user.displayName ?: studentId)
-            put("address", "") // To be populated once Profile view is added
+            put("address", "")
         }
 
-        val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-        val request = Request.Builder()
-            .url("https://starfish-app-x5itk.ondigitalocean.app/attend")
-            .post(body)
-            .build()
+        Thread {
+            try {
+                val url = URL("https://pass.contact/api/attend")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                conn.doOutput = true
 
-        client.newCall(request).enqueue(object : okhttp3.Callback {
-            override fun onFailure(call: okhttp3.Call, e: IOException) {
-                runOnUiThread { Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
-            }
+                OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
 
-            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                val responseData = response.body?.string()
+                val responseData = conn.inputStream.bufferedReader().readText()
+                val code = conn.responseCode
+                conn.disconnect()
+
                 runOnUiThread {
-                    if (response.isSuccessful && responseData != null) {
+                    if (code in 200..299) {
                         val resJson = JSONObject(responseData)
-                        val message = resJson.optString("message")
-                        val title = resJson.optString("title")
+                        val message: String = resJson.optString("message")
+                        val title: String = resJson.optString("title")
 
                         if (message == "attended" || message == "already attended.") {
-                            Toast.makeText(this@MainActivity, "$message $title", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "$message $title", Toast.LENGTH_LONG).show()
                             val intent = Intent(applicationContext, ConfirmationActivity::class.java)
                             intent.putExtra("title", title)
                             startActivity(intent)
                         } else {
-                            Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Toast.makeText(this@MainActivity, "Server Error", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Server Error", Toast.LENGTH_SHORT).show()
                     }
                 }
+            } catch (e: IOException) {
+                runOnUiThread {
+                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
-        })
+        }.start()
     }
 }

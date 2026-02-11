@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Passport</string>
+    <!-- Add your new string here -->
+    <string name="scan_prompt">Scan a QR code</string>
+    <string name="footer_scan">scan</string>
+    <string name="footer_back">back</string>>
 </resources>

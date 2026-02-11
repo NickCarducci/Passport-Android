@@ -5,33 +5,50 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurface"
-    tools:context=".ConfirmationActivity">
+    tools:context=".LoginActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:paddingHorizontal="32dp"
+        android:paddingHorizontal="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/ConfirmedTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:text="Monmouth University\nPassport"
             android:textAlignment="center"
+            android:textSize="24sp"
+            android:textStyle="bold"
             android:textColor="?attr/colorOnSurface"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="40dp" />
 
         <Button
-            android:id="@+id/home"
+            android:id="@+id/microsoftSignInBtn"
             style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sign in with Microsoft"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Back to Events" />
+            android:text="Please use your student email to sign in."
+            android:textSize="12sp"
+            android:textColor="?attr/colorOnSurface"
+            android:alpha="0.6"
+            android:layout_marginBottom="32dp" />
+
+        <Button
+            android:id="@+id/previewBtn"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Preview (TDD)" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

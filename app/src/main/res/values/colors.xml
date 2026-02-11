@@ -2,4 +2,30 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Monmouth University Blue -->
+    <color name="mu_blue">#002F6C</color>
+    <color name="mu_blue_light">#1A4D8F</color>
+    <color name="mu_blue_dark">#001B3D</color>
+    <color name="mu_gray">#5A6E82</color>
+
+    <!-- Material3 light palette -->
+    <color name="md_theme_light_primary">#002F6C</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#D4E3FF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001B3D</color>
+    <color name="md_theme_light_secondary">#555F71</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_surface">#FAFAFA</color>
+    <color name="md_theme_light_onSurface">#1A1C1E</color>
+
+    <!-- Material3 dark palette -->
+    <color name="md_theme_dark_primary">#A5C8FF</color>
+    <color name="md_theme_dark_onPrimary">#00315E</color>
+    <color name="md_theme_dark_primaryContainer">#004785</color>
+    <color name="md_theme_dark_onPrimaryContainer">#D4E3FF</color>
+    <color name="md_theme_dark_secondary">#BDC7DC</color>
+    <color name="md_theme_dark_onSecondary">#273141</color>
+    <color name="md_theme_dark_surface">#1A1C1E</color>
+    <color name="md_theme_dark_onSurface">#E3E2E6</color>
 </resources>
