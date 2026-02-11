@@ -41,7 +41,6 @@ MainActivity
     ├── PANEL: profileView (LinearLayout, off-screen left)
     │   ├── Title "Profile"
     │   ├── Student ID (display)
-    │   ├── Username + Save
     │   └── Logout
     │
     ├── PANEL: eventsView (LinearLayout, center - hub)

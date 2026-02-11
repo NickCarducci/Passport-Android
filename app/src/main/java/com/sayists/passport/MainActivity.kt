@@ -498,9 +498,11 @@ class MainActivity : AppCompatActivity() {
 
                 val leaderNames = ArrayList<String>()
                 for (doc in value!!) {
+                    val studentId = doc.id
                     val username = doc.getString("username")
                     val eventsAttended = doc.getLong("eventsAttended")
-                    leaderNames.add("$username: $eventsAttended")
+                    val displayName = if (!username.isNullOrEmpty()) username else studentId
+                    leaderNames.add("$displayName: $eventsAttended")
                 }
 
                 val mListView = findViewById<ListView>(R.id.leaderList)
@@ -514,25 +516,33 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupProfile() {
         val user = FirebaseAuth.getInstance().currentUser
+        val studentId = user?.email?.substringBefore("@") ?: ""
         findViewById<TextView>(R.id.studentIdTv).text =
-            user?.email?.substringBefore("@") ?: "Not signed in"
+            studentId.ifEmpty { "Not signed in" }
+
+        val usernameEt = findViewById<EditText>(R.id.usernameEt)
+
+        // Load current username from Firestore
+        if (studentId.isNotEmpty()) {
+            db.collection("leaders").document(studentId).get()
+                .addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        usernameEt.setText(doc.getString("username") ?: "")
+                    }
+                }
+        }
 
         // Save username
         findViewById<Button>(R.id.saveUsernameBtn).setOnClickListener {
-            val username = findViewById<EditText>(R.id.et_username).text.trim().toString()
-            if (username.isNotEmpty()) {
-                user?.let {
-                    db.collection("leaders").document(it.uid)
-                        .update("username", username)
-                        .addOnSuccessListener {
-                            Toast.makeText(this, "Username saved", Toast.LENGTH_SHORT).show()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
-                }
-            } else {
-                Toast.makeText(this, "Enter a username", Toast.LENGTH_SHORT).show()
+            if (studentId.isNotEmpty()) {
+                db.collection("leaders").document(studentId)
+                    .set(
+                        hashMapOf("username" to usernameEt.text.toString()),
+                        com.google.firebase.firestore.SetOptions.merge()
+                    )
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Username saved", Toast.LENGTH_SHORT).show()
+                    }
             }
         }
 
@@ -577,7 +587,6 @@ class MainActivity : AppCompatActivity() {
             put("eventId", eventId)
             put("studentId", studentId)
             put("fullName", user.displayName ?: "")
-            put("username", user.displayName ?: studentId)
             put("address", "")
         }
 
