@@ -565,7 +565,10 @@ class MainActivity : AppCompatActivity() {
     private fun launchScanner() {
         scanner.startScan()
             .addOnSuccessListener { barcode ->
-                barcode.rawValue?.let { attendEventViaApi(it) }
+                barcode.rawValue?.let { raw ->
+                    val eventId = extractEventId(raw)
+                    attendEventViaApi(eventId)
+                }
             }
             .addOnCanceledListener {
                 animateToMode(ViewMode.LIST)
@@ -575,58 +578,97 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    private fun extractEventId(raw: String): String {
+        val idx = raw.indexOf("/event/")
+        if (idx >= 0) {
+            val after = raw.substring(idx + 7)
+            val q = after.indexOf('?')
+            return if (q >= 0) after.substring(0, q) else after
+        }
+        return raw
+    }
+
     // ========================================================================
     // API
     // ========================================================================
 
     private fun attendEventViaApi(eventId: String) {
         val user = FirebaseAuth.getInstance().currentUser ?: return
-        val studentId = user.email?.substringBefore("@") ?: ""
 
-        val json = JSONObject().apply {
-            put("eventId", eventId)
-            put("studentId", studentId)
-            put("fullName", user.displayName ?: "")
-            put("address", "")
-        }
+        user.getIdToken(false).addOnSuccessListener { result ->
+            val idToken = result.token ?: return@addOnSuccessListener
 
-        Thread {
-            try {
-                val url = URL("https://pass.contact/api/attend")
-                val conn = url.openConnection() as HttpURLConnection
-                conn.requestMethod = "POST"
-                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                conn.doOutput = true
+            Thread {
+                try {
+                    // Step 1: Get one-time code
+                    val codeJson = JSONObject().apply { put("eventId", eventId) }
+                    val codeConn = (URL("https://pass.contact/api/code").openConnection() as HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                        setRequestProperty("Authorization", "Bearer $idToken")
+                        doOutput = true
+                    }
+                    OutputStreamWriter(codeConn.outputStream).use { it.write(codeJson.toString()) }
+                    val codeData = codeConn.inputStream.bufferedReader().readText()
+                    codeConn.disconnect()
+                    val codeRes = JSONObject(codeData)
 
-                OutputStreamWriter(conn.outputStream).use { it.write(json.toString()) }
-
-                val responseData = conn.inputStream.bufferedReader().readText()
-                val code = conn.responseCode
-                conn.disconnect()
-
-                runOnUiThread {
-                    if (code in 200..299) {
-                        val resJson = JSONObject(responseData)
-                        val message: String = resJson.optString("message")
-                        val title: String = resJson.optString("title")
-
-                        if (message == "attended" || message == "already attended.") {
-                            Toast.makeText(this, "$message $title", Toast.LENGTH_LONG).show()
-                            val intent = Intent(applicationContext, ConfirmationActivity::class.java)
-                            intent.putExtra("title", title)
-                            startActivity(intent)
-                        } else {
-                            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                    if (codeRes.optString("message") == "already attended.") {
+                        runOnUiThread {
+                            Toast.makeText(this, "already attended.", Toast.LENGTH_LONG).show()
                         }
-                    } else {
-                        Toast.makeText(this, "Server Error", Toast.LENGTH_SHORT).show()
+                        return@Thread
+                    }
+                    val code = codeRes.optString("code")
+                    if (code.isEmpty()) {
+                        runOnUiThread {
+                            Toast.makeText(this, codeRes.optString("message", "No code"), Toast.LENGTH_SHORT).show()
+                        }
+                        return@Thread
+                    }
+
+                    // Step 2: Attend with code
+                    val attendJson = JSONObject().apply {
+                        put("eventId", eventId)
+                        put("code", code)
+                        put("fullName", user.displayName ?: "")
+                        put("address", "")
+                    }
+                    val attendConn = (URL("https://pass.contact/api/attend").openConnection() as HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                        setRequestProperty("Authorization", "Bearer $idToken")
+                        doOutput = true
+                    }
+                    OutputStreamWriter(attendConn.outputStream).use { it.write(attendJson.toString()) }
+                    val attendData = attendConn.inputStream.bufferedReader().readText()
+                    val attendCode = attendConn.responseCode
+                    attendConn.disconnect()
+
+                    runOnUiThread {
+                        if (attendCode in 200..299) {
+                            val resJson = JSONObject(attendData)
+                            val message = resJson.optString("message")
+                            val title = resJson.optString("title")
+
+                            if (message == "attended" || message == "already attended.") {
+                                Toast.makeText(this, "$message $title", Toast.LENGTH_LONG).show()
+                                val intent = Intent(applicationContext, ConfirmationActivity::class.java)
+                                intent.putExtra("title", title)
+                                startActivity(intent)
+                            } else {
+                                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(this, "Server Error", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: IOException) {
+                    runOnUiThread {
+                        Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
-            } catch (e: IOException) {
-                runOnUiThread {
-                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }.start()
+            }.start()
+        }
     }
 }
