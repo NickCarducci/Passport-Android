@@ -30,7 +30,7 @@ jobs:
 
     - name: Build release AAB
       env:
-        KEYSTORE_FILE: app/release.keystore
+        KEYSTORE_FILE: release.keystore
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -44,7 +44,7 @@ jobs:
 
     - name: Build release APK (for testing)
       env:
-        KEYSTORE_FILE: app/release.keystore
+        KEYSTORE_FILE: release.keystore
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
