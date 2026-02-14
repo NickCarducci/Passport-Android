@@ -2,7 +2,10 @@ package com.sayists.passport
 
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -501,7 +504,7 @@ class MainActivity : AppCompatActivity() {
                     val studentId = doc.id
                     val username = doc.getString("username")
                     val eventsAttended = doc.getLong("eventsAttended")
-                    val displayName = if (!username.isNullOrEmpty()) username else studentId
+                    val displayName = if (!username.isNullOrEmpty()) username else "Anonymous"
                     leaderNames.add("$displayName: $eventsAttended")
                 }
 
@@ -670,5 +673,30 @@ class MainActivity : AppCompatActivity() {
                 }
             }.start()
         }
+    }
+
+    // ========================================================================
+    // Menu (Account Settings)
+    // ========================================================================
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.menu_account_settings -> {
+                openAccountSettings()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun openAccountSettings() {
+        val url = "https://pass.contact/account"
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        startActivity(intent)
     }
 }

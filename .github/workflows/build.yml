@@ -28,7 +28,21 @@ jobs:
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
 
-    - name: Build release APK
+    - name: Build release AAB
+      env:
+        KEYSTORE_FILE: app/release.keystore
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      run: ./gradlew bundleRelease
+
+    - name: Upload AAB
+      uses: actions/upload-artifact@v4
+      with:
+        name: passport-release-aab
+        path: app/build/outputs/bundle/release/app-release.aab
+
+    - name: Build release APK (for testing)
       env:
         KEYSTORE_FILE: app/release.keystore
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -39,5 +53,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: passport-release
+        name: passport-release-apk
         path: app/build/outputs/apk/release/app-release.apk
