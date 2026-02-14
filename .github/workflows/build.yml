@@ -24,11 +24,16 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Set version from build.gradle.kts
+      - name: Set version from date
         run: |
-          # Read version from gradle file
+          # Use date-based version code (YYYYMMDDHHMM format)
+          VERSION_CODE=$(date +%Y%m%d%H%M)
+
+          # Read version name from gradle file
           VERSION_NAME=$(grep "versionName = " app/build.gradle.kts | awk -F'"' '{print $2}')
-          VERSION_CODE=$(grep "versionCode = " app/build.gradle.kts | awk '{print $3}')
+
+          # Update build.gradle.kts with date-based version code
+          sed -i "s/versionCode = .*/versionCode = $VERSION_CODE/" app/build.gradle.kts
 
           echo "Building version $VERSION_NAME (code $VERSION_CODE)"
 
