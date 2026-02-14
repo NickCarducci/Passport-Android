@@ -2,9 +2,9 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
@@ -12,79 +12,75 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    - name: Auto-increment version
-      run: |
-        # Read current versions
-        CURRENT_VERSION_CODE=$(grep "versionCode = " app/build.gradle.kts | awk '{print $3}')
-        CURRENT_VERSION_NAME=$(grep "versionName = " app/build.gradle.kts | awk -F'"' '{print $2}')
+      - name: Set version from run number
+        run: |
+          # Read version name from gradle file
+          VERSION_NAME=$(grep "versionName = " app/build.gradle.kts | awk -F'"' '{print $2}')
 
-        # Increment version code
-        NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+          # Find commit where this version was introduced (when versionName was changed to current value)
+          VERSION_COMMIT=$(git log --all --pretty=format:"%H" -S "versionName = \"$VERSION_NAME\"" -- app/build.gradle.kts | head -1)
 
-        # Parse and increment patch version (e.g., 1.0.1 -> 1.0.2)
-        MAJOR=$(echo $CURRENT_VERSION_NAME | cut -d. -f1)
-        MINOR=$(echo $CURRENT_VERSION_NAME | cut -d. -f2)
-        PATCH=$(echo $CURRENT_VERSION_NAME | cut -d. -f3)
-        NEW_PATCH=$((PATCH + 1))
-        NEW_VERSION_NAME="$MAJOR.$MINOR.$NEW_PATCH"
+          if [ -z "$VERSION_COMMIT" ]; then
+            # If version not found in history, start at 1
+            VERSION_CODE=1
+          else
+            # Count commits since version was set (this gives us version-specific build count)
+            VERSION_CODE=$(git rev-list --count ${VERSION_COMMIT}..HEAD)
+            # Add 1 to start from 1 instead of 0
+            VERSION_CODE=$((VERSION_CODE + 1))
+          fi
 
-        # Update build.gradle.kts
-        sed -i "s/versionCode = $CURRENT_VERSION_CODE/versionCode = $NEW_VERSION_CODE/" app/build.gradle.kts
-        sed -i "s/versionName = \"$CURRENT_VERSION_NAME\"/versionName = \"$NEW_VERSION_NAME\"/" app/build.gradle.kts
+          # Update build.gradle.kts with version-specific code
+          sed -i "s/versionCode = .*/versionCode = $VERSION_CODE/" app/build.gradle.kts
 
-        # Configure git and commit
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
-        git add app/build.gradle.kts
-        git commit -m "Auto-increment version to $NEW_VERSION_NAME (code $NEW_VERSION_CODE) [skip ci]"
-        git push
+          echo "Building version $VERSION_NAME (code $VERSION_CODE)"
 
-    - name: Decode keystore
-      run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
 
-    - name: Build release AAB
-      env:
-        KEYSTORE_FILE: release.keystore
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      run: ./gradlew bundleRelease
+      - name: Build release AAB
+        env:
+          KEYSTORE_FILE: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew bundleRelease
 
-    - name: Upload AAB
-      uses: actions/upload-artifact@v4
-      with:
-        name: passport-release-aab
-        path: app/build/outputs/bundle/release/app-release.aab
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: passport-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
 
-    - name: Upload mapping file
-      uses: actions/upload-artifact@v4
-      with:
-        name: passport-release-mapping
-        path: app/build/outputs/mapping/release/mapping.txt
+      - name: Upload mapping file
+        uses: actions/upload-artifact@v4
+        with:
+          name: passport-release-mapping
+          path: app/build/outputs/mapping/release/mapping.txt
 
-    - name: Build release APK (for testing)
-      env:
-        KEYSTORE_FILE: release.keystore
-        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-      run: ./gradlew assembleRelease
+      - name: Build release APK (for testing)
+        env:
+          KEYSTORE_FILE: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: passport-release-apk
-        path: app/build/outputs/apk/release/app-release.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: passport-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
