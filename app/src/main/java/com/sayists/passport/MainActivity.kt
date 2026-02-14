@@ -647,6 +647,7 @@ class MainActivity : AppCompatActivity() {
             .addOnSuccessListener { barcode ->
                 barcode.rawValue?.let { raw ->
                     val eventId = extractEventId(raw)
+                    animateToMode(ViewMode.LIST)
                     attendEventViaApi(eventId)
                 }
             }
@@ -693,11 +694,19 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        user.getIdToken(false).addOnSuccessListener { result ->
-            val idToken = result.token ?: return@addOnSuccessListener
+        user.getIdToken(false)
+            .addOnSuccessListener { result ->
+                val idToken = result.token
+                if (idToken == null) {
+                    runOnUiThread {
+                        Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show()
+                        animateToMode(ViewMode.LIST)
+                    }
+                    return@addOnSuccessListener
+                }
 
-            Thread {
-                try {
+                Thread {
+                    try {
                     // Step 1: Get one-time code
                     val codeJson = JSONObject().apply { put("eventId", eventId) }
                     val codeConn = (URL("https://pass.contact/api/code").openConnection() as HttpURLConnection).apply {
@@ -707,6 +716,22 @@ class MainActivity : AppCompatActivity() {
                         doOutput = true
                     }
                     OutputStreamWriter(codeConn.outputStream).use { it.write(codeJson.toString()) }
+
+                    val codeResponseCode = codeConn.responseCode
+                    if (codeResponseCode !in 200..299) {
+                        val errorMsg = try {
+                            codeConn.errorStream?.bufferedReader()?.readText() ?: "Request failed"
+                        } catch (e: Exception) {
+                            "Request failed with code $codeResponseCode"
+                        }
+                        codeConn.disconnect()
+                        runOnUiThread {
+                            Toast.makeText(this, "Code API error: $errorMsg", Toast.LENGTH_SHORT).show()
+                            animateToMode(ViewMode.LIST)
+                        }
+                        return@Thread
+                    }
+
                     val codeData = codeConn.inputStream.bufferedReader().readText()
                     codeConn.disconnect()
                     val codeRes = JSONObject(codeData)
@@ -722,6 +747,7 @@ class MainActivity : AppCompatActivity() {
                     if (code.isEmpty()) {
                         runOnUiThread {
                             Toast.makeText(this, codeRes.optString("message", "No code"), Toast.LENGTH_SHORT).show()
+                            animateToMode(ViewMode.LIST)
                         }
                         return@Thread
                     }
@@ -775,14 +801,22 @@ class MainActivity : AppCompatActivity() {
                             }
                         } else {
                             Toast.makeText(this, "Server Error", Toast.LENGTH_SHORT).show()
+                            animateToMode(ViewMode.LIST)
                         }
                     }
                 } catch (e: IOException) {
                     runOnUiThread {
                         Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        animateToMode(ViewMode.LIST)
                     }
                 }
             }.start()
+        }
+        .addOnFailureListener { e ->
+            runOnUiThread {
+                Toast.makeText(this, "Token error: ${e.message}", Toast.LENGTH_SHORT).show()
+                animateToMode(ViewMode.LIST)
+            }
         }
     }
 
