@@ -3354,7 +3354,9 @@ id endToStart
 id enterAlways
 id enterAlwaysCollapsed
 id escape
-id et_username
+id eventDateTv
+id eventLocationTv
+id eventTitleTv
 id eventlist
 id eventsView
 id exitUntilCollapsed
@@ -3379,6 +3381,7 @@ id forever
 id fragment_container_view_tag
 id frost
 id fullscreen_header
+id getDirectionsBtn
 id ghost_view
 id ghost_view_holder
 id gone
@@ -3426,6 +3429,7 @@ id linear
 id listMode
 id listNavBtn
 id list_item
+id locationLabel
 id logOutBtn
 id m3_side_sheet
 id marquee
@@ -3453,6 +3457,7 @@ id material_timepicker_ok_button
 id material_timepicker_view
 id material_value_index
 id matrix
+id menu_account_settings
 id message
 id microsoftSignInBtn
 id middle
@@ -3678,6 +3683,7 @@ id uniform
 id unlabeled
 id up
 id useLogo
+id usernameEt
 id vertical_only
 id view_offset_helper
 id view_transition
@@ -3814,6 +3820,7 @@ layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
 layout activity_confirmation
+layout activity_event_detail
 layout activity_login
 layout activity_main
 layout activity_webview
@@ -3898,6 +3905,7 @@ layout select_dialog_item_material
 layout select_dialog_multichoice_material
 layout select_dialog_singlechoice_material
 layout support_simple_spinner_dropdown_item
+menu main_menu
 mipmap ic_launcher
 mipmap ic_launcher_round
 plurals mtrl_badge_content_description

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.sayists.passport"
-    android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionCode="2"
+    android:versionName="1.0.1" >
 
     <uses-sdk
         android:minSdkVersion="24"
-        android:targetSdkVersion="34" />
+        android:targetSdkVersion="35" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -32,9 +32,17 @@
         android:supportsRtl="true"
         android:testOnly="true"
         android:theme="@style/Theme.Passport" >
+
+        <!-- Explicitly disable Google Analytics AdID collection -->
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+
         <activity android:name="com.sayists.passport.ConfirmationActivity" >
         </activity>
         <activity android:name="com.sayists.passport.WebviewActivity" >
+        </activity>
+        <activity android:name="com.sayists.passport.EventDetailActivity" >
         </activity>
         <activity
             android:name="com.sayists.passport.LoginActivity"

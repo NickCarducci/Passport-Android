@@ -5,6 +5,6 @@
     <string name="google_api_key" translatable="false">AIzaSyAOFAoaQAjnGo_LeSK0uBHL8IR_sAeyz7c</string>
     <string name="google_app_id" translatable="false">1:712511258077:android:3e40302a1a38d394a34a34</string>
     <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAOFAoaQAjnGo_LeSK0uBHL8IR_sAeyz7c</string>
-    <string name="google_storage_bucket" translatable="false">passport-s0989374.appspot.com</string>
+    <string name="google_storage_bucket" translatable="false">passport-s0989374.firebasestorage.app</string>
     <string name="project_id" translatable="false">passport-s0989374</string>
 </resources>

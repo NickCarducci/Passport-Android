@@ -8,6 +8,10 @@
         "source": "com.sayists.passport.app-main-41:/mipmap-hdpi/ic_launcher_round.webp"
     },
     {
+        "merged": "com.sayists.passport.app-debug-39:/menu_main_menu.xml.flat",
+        "source": "com.sayists.passport.app-main-41:/menu/main_menu.xml"
+    },
+    {
         "merged": "com.sayists.passport.app-debug-39:/xml_backup_rules.xml.flat",
         "source": "com.sayists.passport.app-main-41:/xml/backup_rules.xml"
     },
@@ -30,6 +34,10 @@
     {
         "merged": "com.sayists.passport.app-debug-39:/drawable_ic_launcher_foreground.xml.flat",
         "source": "com.sayists.passport.app-main-41:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.sayists.passport.app-debug-39:/layout_activity_event_detail.xml.flat",
+        "source": "com.sayists.passport.app-main-41:/layout/activity_event_detail.xml"
     },
     {
         "merged": "com.sayists.passport.app-debug-39:/mipmap-hdpi_ic_launcher.webp.flat",

@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-37:12
-INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-37:12
-INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-37:12
-INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-37:12
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-49:12
+INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-49:12
+INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-49:12
+INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:2:1-49:12
 MERGED from [com.google.android.material:material:1.12.0] /Users/nicholascarducci/.gradle/caches/transforms-4/056b4bd2247c90dbfdf9c413dc7bbd4f/transformed/material-1.12.0/AndroidManifest.xml:17:1-24:12
 MERGED from [com.google.firebase:firebase-firestore-ktx:25.1.0] /Users/nicholascarducci/.gradle/caches/transforms-4/64852c8c8e14562a87950ea39d01b094/transformed/firebase-firestore-ktx-25.1.0/AndroidManifest.xml:2:1-18:12
 MERGED from [com.google.firebase:firebase-auth:23.0.0] /Users/nicholascarducci/.gradle/caches/transforms-4/87db23f0984bf25506bc35f2a8e8460e/transformed/firebase-auth-23.0.0/AndroidManifest.xml:17:1-75:12
@@ -103,9 +103,15 @@ MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /User
 MERGED from [com.google.android.datatransport:transport-backend-cct:2.3.3] /Users/nicholascarducci/.gradle/caches/transforms-4/d8192c6a46e3e87daa0c08163cee4300/transformed/transport-backend-cct-2.3.3/AndroidManifest.xml:26:5-67
 	android:name
 		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:5:22-64
+uses-permission#com.google.android.gms.permission.AD_ID
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:8:5-98
+	tools:node
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:8:77-96
+	android:name
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:8:22-76
 application
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:7:5-35:19
-INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:7:5-35:19
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:10:5-47:19
+INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:10:5-47:19
 MERGED from [com.google.android.material:material:1.12.0] /Users/nicholascarducci/.gradle/caches/transforms-4/056b4bd2247c90dbfdf9c413dc7bbd4f/transformed/material-1.12.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.12.0] /Users/nicholascarducci/.gradle/caches/transforms-4/056b4bd2247c90dbfdf9c413dc7bbd4f/transformed/material-1.12.0/AndroidManifest.xml:22:5-20
 MERGED from [com.google.firebase:firebase-firestore-ktx:25.1.0] /Users/nicholascarducci/.gradle/caches/transforms-4/64852c8c8e14562a87950ea39d01b094/transformed/firebase-firestore-ktx-25.1.0/AndroidManifest.xml:8:5-16:19
@@ -171,53 +177,63 @@ MERGED from [com.google.android.odml:image:1.0.0-beta1] /Users/nicholascarducci/
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] /Users/nicholascarducci/.gradle/caches/transforms-4/e9e91dda3b52680d910a02bd18f06201/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:15:9-35
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:18:9-35
 	android:label
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:12:9-41
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:15:9-41
 	android:fullBackupContent
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:10:9-54
-	android:roundIcon
 		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:13:9-54
+	android:roundIcon
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:16:9-54
 	tools:targetApi
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:17:9-29
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:20:9-29
 	android:icon
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:11:9-43
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:14:9-43
 	android:allowBackup
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:8:9-35
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:11:9-35
 	android:theme
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:16:9-46
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:19:9-46
 	android:enableOnBackInvokedCallback
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:14:9-51
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:17:9-51
 	android:dataExtractionRules
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:9:9-65
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:12:9-65
+meta-data#google_analytics_adid_collection_enabled
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:23:9-25:37
+	android:value
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:25:13-34
+	android:name
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:24:13-68
 activity#com.sayists.passport.ConfirmationActivity
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:18:9-20:20
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:27:9-29:20
 	android:name
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:19:13-49
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:28:13-49
 activity#com.sayists.passport.WebviewActivity
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:21:9-23:20
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:30:9-32:20
 	android:name
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:22:13-44
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:31:13-44
+activity#com.sayists.passport.EventDetailActivity
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:33:9-35:20
+	android:name
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:34:13-48
 activity#com.sayists.passport.LoginActivity
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:24:9-31:20
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:36:9-43:20
 	android:exported
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:26:13-36
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:38:13-36
 	android:name
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:25:13-42
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:37:13-42
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:27:13-30:29
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:39:13-42:29
 action#android.intent.action.MAIN
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:28:17-69
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:40:17-69
 	android:name
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:28:25-66
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:40:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:29:17-77
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:41:17-77
 	android:name
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:29:27-74
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:41:27-74
 activity#com.sayists.passport.MainActivity
-ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:32:9-34:20
+ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:44:9-46:20
 	android:name
-		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:33:13-41
+		ADDED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml:45:13-41
 uses-sdk
 INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /Users/nicholascarducci/Desktop/passport/Android/app/src/main/AndroidManifest.xml
