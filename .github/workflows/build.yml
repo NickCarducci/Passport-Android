@@ -26,8 +26,8 @@ jobs:
 
       - name: Set version from date
         run: |
-          # Use date-based version code (YYYYMMDDHHMM format)
-          VERSION_CODE=$(date +%Y%m%d%H%M)
+          # Use date-based version code (YYMMDDHHMM format - fits in 32-bit int)
+          VERSION_CODE=$(date +%y%m%d%H%M)
 
           # Read version name from gradle file
           VERSION_NAME=$(grep "versionName = " app/build.gradle.kts | awk -F'"' '{print $2}')
