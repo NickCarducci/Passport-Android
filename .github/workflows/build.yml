@@ -24,6 +24,33 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Auto-increment version
+      run: |
+        # Read current versions
+        CURRENT_VERSION_CODE=$(grep "versionCode = " app/build.gradle.kts | awk '{print $3}')
+        CURRENT_VERSION_NAME=$(grep "versionName = " app/build.gradle.kts | awk -F'"' '{print $2}')
+
+        # Increment version code
+        NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+
+        # Parse and increment patch version (e.g., 1.0.1 -> 1.0.2)
+        MAJOR=$(echo $CURRENT_VERSION_NAME | cut -d. -f1)
+        MINOR=$(echo $CURRENT_VERSION_NAME | cut -d. -f2)
+        PATCH=$(echo $CURRENT_VERSION_NAME | cut -d. -f3)
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION_NAME="$MAJOR.$MINOR.$NEW_PATCH"
+
+        # Update build.gradle.kts
+        sed -i "s/versionCode = $CURRENT_VERSION_CODE/versionCode = $NEW_VERSION_CODE/" app/build.gradle.kts
+        sed -i "s/versionName = \"$CURRENT_VERSION_NAME\"/versionName = \"$NEW_VERSION_NAME\"/" app/build.gradle.kts
+
+        # Configure git and commit
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add app/build.gradle.kts
+        git commit -m "Auto-increment version to $NEW_VERSION_NAME (code $NEW_VERSION_CODE) [skip ci]"
+        git push
+
     - name: Decode keystore
       run: |
         echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
