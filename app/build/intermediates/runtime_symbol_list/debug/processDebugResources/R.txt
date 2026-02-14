@@ -3235,6 +3235,8 @@ int id action_text 0x7f080044
 int id actions 0x7f080045
 int id activity_chooser_view_content 0x7f080046
 int id add 0x7f080047
+int id addressLine1Et 0x7f08021c
+int id addressLine2Et 0x7f08021d
 int id adjust_height 0x7f080048
 int id adjust_width 0x7f080049
 int id alertTitle 0x7f08004a
@@ -3287,6 +3289,7 @@ int id checkbox 0x7f080078
 int id checked 0x7f080079
 int id chronometer 0x7f08007a
 int id circle_center 0x7f08007b
+int id cityEt 0x7f08021e
 int id clear_text 0x7f08007c
 int id clip_horizontal 0x7f08007d
 int id clip_vertical 0x7f08007e
@@ -3379,6 +3382,7 @@ int id focalContainer 0x7f0800d4
 int id forever 0x7f0800d5
 int id fragment_container_view_tag 0x7f0800d6
 int id frost 0x7f0800d7
+int id fullNameEt 0x7f08021f
 int id fullscreen_header 0x7f0800d8
 int id getDirectionsBtn 0x7f0800d9
 int id ghost_view 0x7f0800da
@@ -3562,7 +3566,7 @@ int id right_icon 0x7f08018b
 int id right_side 0x7f08018c
 int id rounded 0x7f08018d
 int id row_index_key 0x7f08018e
-int id saveUsernameBtn 0x7f08018f
+int id saveProfileBtn 0x7f080220
 int id save_non_transition_alpha 0x7f080190
 int id save_overlay_view 0x7f080191
 int id sawtooth 0x7f080192
@@ -3620,6 +3624,7 @@ int id start 0x7f0801c5
 int id startHorizontal 0x7f0801c6
 int id startToEnd 0x7f0801c7
 int id startVertical 0x7f0801c8
+int id stateEt 0x7f080221
 int id staticLayout 0x7f0801c9
 int id staticPostLayout 0x7f0801ca
 int id stop 0x7f0801cb
@@ -3703,6 +3708,7 @@ int id wrap_content 0x7f080218
 int id wrap_content_constrained 0x7f080219
 int id x_left 0x7f08021a
 int id x_right 0x7f08021b
+int id zipCodeEt 0x7f080222
 int integer abc_config_activityDefaultDur 0x7f090000
 int integer abc_config_activityShortDur 0x7f090001
 int integer app_bar_elevation_anim_duration 0x7f090002

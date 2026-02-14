@@ -3236,6 +3236,8 @@ id action_text
 id actions
 id activity_chooser_view_content
 id add
+id addressLine1Et
+id addressLine2Et
 id adjust_height
 id adjust_width
 id alertTitle
@@ -3288,6 +3290,7 @@ id checkbox
 id checked
 id chronometer
 id circle_center
+id cityEt
 id clear_text
 id clip_horizontal
 id clip_vertical
@@ -3380,6 +3383,7 @@ id focalContainer
 id forever
 id fragment_container_view_tag
 id frost
+id fullNameEt
 id fullscreen_header
 id getDirectionsBtn
 id ghost_view
@@ -3563,7 +3567,7 @@ id right_icon
 id right_side
 id rounded
 id row_index_key
-id saveUsernameBtn
+id saveProfileBtn
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -3621,6 +3625,7 @@ id start
 id startHorizontal
 id startToEnd
 id startVertical
+id stateEt
 id staticLayout
 id staticPostLayout
 id stop
@@ -3704,6 +3709,7 @@ id wrap_content
 id wrap_content_constrained
 id x_left
 id x_right
+id zipCodeEt
 integer abc_config_activityDefaultDur
 integer abc_config_activityShortDur
 integer app_bar_elevation_anim_duration

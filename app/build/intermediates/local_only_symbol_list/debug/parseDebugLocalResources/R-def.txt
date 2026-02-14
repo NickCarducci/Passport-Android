@@ -26,7 +26,10 @@ drawable ic_launcher_background
 drawable ic_launcher_foreground
 drawable scholarweek_logo
 id ConfirmedTv
+id addressLine1Et
+id addressLine2Et
 id backBtn
+id cityEt
 id eventDateTv
 id eventLocationTv
 id eventTitleTv
@@ -34,6 +37,7 @@ id eventlist
 id eventsView
 id floatingNavBtn
 id focalContainer
+id fullNameEt
 id getDirectionsBtn
 id home
 id leaderList
@@ -48,13 +52,15 @@ id previewBtn
 id profileNavBtn
 id profileView
 id pullHintTv
-id saveUsernameBtn
+id saveProfileBtn
 id scanQrBtn
 id scannerTitleTv
 id scannerView
+id stateEt
 id studentIdTv
 id usernameEt
 id webview
+id zipCodeEt
 layout activity_confirmation
 layout activity_event_detail
 layout activity_login

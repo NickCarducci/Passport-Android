@@ -25,6 +25,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -455,8 +456,8 @@ class MainActivity : AppCompatActivity() {
             if (shouldBlockTaps()) return@OnItemClickListener
             if (position < descriptionLinks.size) {
                 val url = descriptionLinks[position]
-                if (url.isNotEmpty()) {
-                    // Open URL if set
+                if (url.isNotEmpty() && isValidHttpsUrl(url)) {
+                    // Open URL if set and valid HTTPS
                     val intent = Intent(applicationContext, WebviewActivity::class.java)
                     intent.putExtra("url", url)
                     startActivity(intent)
@@ -545,27 +546,82 @@ class MainActivity : AppCompatActivity() {
             studentId.ifEmpty { "Not signed in" }
 
         val usernameEt = findViewById<EditText>(R.id.usernameEt)
+        val fullNameEt = findViewById<EditText>(R.id.fullNameEt)
+        val addressLine1Et = findViewById<EditText>(R.id.addressLine1Et)
+        val addressLine2Et = findViewById<EditText>(R.id.addressLine2Et)
+        val cityEt = findViewById<EditText>(R.id.cityEt)
+        val stateEt = findViewById<EditText>(R.id.stateEt)
+        val zipCodeEt = findViewById<EditText>(R.id.zipCodeEt)
 
-        // Load current username from Firestore
+        // Load profile data from Firestore
         if (studentId.isNotEmpty()) {
             db.collection("leaders").document(studentId).get()
                 .addOnSuccessListener { doc ->
                     if (doc.exists()) {
                         usernameEt.setText(doc.getString("username") ?: "")
+                        fullNameEt.setText(doc.getString("fullName") ?: "")
+
+                        // Parse address if it exists
+                        val address = doc.getString("address") ?: ""
+                        if (address.isNotEmpty()) {
+                            val parts = address.split(", ")
+                            if (parts.size >= 4) {
+                                addressLine1Et.setText(parts[0])
+                                val hasLine2 = parts.size == 5
+                                if (hasLine2) {
+                                    addressLine2Et.setText(parts[1])
+                                    cityEt.setText(parts[2])
+                                    val stateZip = parts[3].split(" ")
+                                    stateEt.setText(stateZip.getOrNull(0) ?: "")
+                                    zipCodeEt.setText(stateZip.getOrNull(1) ?: "")
+                                } else {
+                                    cityEt.setText(parts[1])
+                                    val stateZip = parts[2].split(" ")
+                                    stateEt.setText(stateZip.getOrNull(0) ?: "")
+                                    zipCodeEt.setText(stateZip.getOrNull(1) ?: "")
+                                }
+                            }
+                        }
                     }
                 }
         }
 
-        // Save username
-        findViewById<Button>(R.id.saveUsernameBtn).setOnClickListener {
+        // Save profile
+        findViewById<Button>(R.id.saveProfileBtn).setOnClickListener {
             if (studentId.isNotEmpty()) {
+                val username = usernameEt.text.toString()
+                val fullName = fullNameEt.text.toString()
+                val line1 = addressLine1Et.text.toString()
+                val line2 = addressLine2Et.text.toString()
+                val city = cityEt.text.toString()
+                val state = stateEt.text.toString()
+                val zip = zipCodeEt.text.toString()
+
+                // Build address string
+                val address = if (line1.isNotEmpty() && city.isNotEmpty() && state.isNotEmpty() && zip.isNotEmpty()) {
+                    if (line2.isEmpty()) {
+                        "$line1, $city, $state $zip"
+                    } else {
+                        "$line1, $line2, $city, $state $zip"
+                    }
+                } else {
+                    ""
+                }
+
                 db.collection("leaders").document(studentId)
                     .set(
-                        hashMapOf("username" to usernameEt.text.toString()),
+                        hashMapOf(
+                            "username" to username,
+                            "fullName" to fullName,
+                            "address" to address
+                        ),
                         com.google.firebase.firestore.SetOptions.merge()
                     )
                     .addOnSuccessListener {
-                        Toast.makeText(this, "Username saved", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Profile saved", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Save failed: ${it.message}", Toast.LENGTH_SHORT).show()
                     }
             }
         }
@@ -612,6 +668,15 @@ class MainActivity : AppCompatActivity() {
         return raw
     }
 
+    private fun isValidHttpsUrl(url: String): Boolean {
+        return try {
+            val uri = Uri.parse(url)
+            uri.scheme == "https" && !uri.host.isNullOrEmpty()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     // ========================================================================
     // API
     // ========================================================================
@@ -648,7 +713,8 @@ class MainActivity : AppCompatActivity() {
 
                     if (codeRes.optString("message") == "already attended.") {
                         runOnUiThread {
-                            Toast.makeText(this, "already attended.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, "You already attended this event", Toast.LENGTH_LONG).show()
+                            animateToMode(ViewMode.LIST)
                         }
                         return@Thread
                     }
@@ -661,11 +727,26 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     // Step 2: Attend with code
+                    // Get saved profile data from Firestore (blocking call in background thread)
+                    val studentId = user.email?.substringBefore("@") ?: ""
+                    var savedFullName = ""
+                    var savedAddress = ""
+
+                    if (studentId.isNotEmpty()) {
+                        try {
+                            val leaderDoc = Tasks.await(db.collection("leaders").document(studentId).get())
+                            savedFullName = leaderDoc.getString("fullName") ?: ""
+                            savedAddress = leaderDoc.getString("address") ?: ""
+                        } catch (e: Exception) {
+                            // Continue with empty values if fetch fails
+                        }
+                    }
+
                     val attendJson = JSONObject().apply {
                         put("eventId", eventId)
                         put("code", code)
-                        put("fullName", user.displayName ?: "")
-                        put("address", "")
+                        put("fullName", savedFullName)
+                        put("address", savedAddress)
                     }
                     val attendConn = (URL("https://pass.contact/api/attend").openConnection() as HttpURLConnection).apply {
                         requestMethod = "POST"

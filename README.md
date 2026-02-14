@@ -197,3 +197,10 @@ Once the release is live (takes ~1 hour):
 -  Testers added to email list
 
 After internal testing passes, you can promote the same release to Production without re-uploading!
+
+1. push to repo
+2. let actions workflow build
+3. find Upload AAB step
+4. At the end you'll find
+
+> Artifact download URL: https://github.com/NickCarducci/Passport-Android/actions/runs/22024743959/artifacts/5512970477
