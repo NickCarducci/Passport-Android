@@ -87,6 +87,10 @@ class MainActivity : AppCompatActivity() {
     // --- Data ---
     private val db = FirebaseFirestore.getInstance()
     private val descriptionLinks = ArrayList<String>()
+    private val eventIds = ArrayList<String>()
+    private val eventTitles = ArrayList<String>()
+    private val eventDates = ArrayList<String>()
+    private val eventLocations = ArrayList<String>()
 
     // ========================================================================
     // Lifecycle
@@ -452,8 +456,17 @@ class MainActivity : AppCompatActivity() {
             if (position < descriptionLinks.size) {
                 val url = descriptionLinks[position]
                 if (url.isNotEmpty()) {
+                    // Open URL if set
                     val intent = Intent(applicationContext, WebviewActivity::class.java)
                     intent.putExtra("url", url)
+                    startActivity(intent)
+                } else {
+                    // Open event detail page (directions)
+                    val intent = Intent(applicationContext, EventDetailActivity::class.java)
+                    intent.putExtra("eventId", eventIds[position])
+                    intent.putExtra("title", eventTitles[position])
+                    intent.putExtra("date", eventDates[position])
+                    intent.putExtra("location", eventLocations[position])
                     startActivity(intent)
                 }
             }
@@ -471,19 +484,27 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 descriptionLinks.clear()
-                val eventTitles = ArrayList<String>()
+                eventIds.clear()
+                eventTitles.clear()
+                eventDates.clear()
+                eventLocations.clear()
+                val eventDisplayNames = ArrayList<String>()
 
                 for (doc in value!!) {
-                    val date = doc.getString("date")
-                    val title = doc.getString("title")
-                    val location = doc.getString("location")
+                    val date = doc.getString("date") ?: ""
+                    val title = doc.getString("title") ?: ""
+                    val location = doc.getString("location") ?: ""
                     descriptionLinks.add(doc.getString("descriptionLink") ?: "")
-                    eventTitles.add("$date $title: $location")
+                    eventIds.add(doc.id)
+                    eventTitles.add(title)
+                    eventDates.add(date)
+                    eventLocations.add(location)
+                    eventDisplayNames.add("$date $title: $location")
                 }
 
                 val mListView = findViewById<ListView>(R.id.eventlist)
                 mListView.adapter = ArrayAdapter(
-                    this, android.R.layout.simple_list_item_1, eventTitles
+                    this, android.R.layout.simple_list_item_1, eventDisplayNames
                 )
             }
     }
@@ -596,7 +617,16 @@ class MainActivity : AppCompatActivity() {
     // ========================================================================
 
     private fun attendEventViaApi(eventId: String) {
-        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val user = FirebaseAuth.getInstance().currentUser
+
+        // If not signed in, prompt to sign in
+        if (user == null) {
+            runOnUiThread {
+                Toast.makeText(this, "Please sign in to attend events", Toast.LENGTH_LONG).show()
+                startActivity(Intent(applicationContext, LoginActivity::class.java))
+            }
+            return
+        }
 
         user.getIdToken(false).addOnSuccessListener { result ->
             val idToken = result.token ?: return@addOnSuccessListener
