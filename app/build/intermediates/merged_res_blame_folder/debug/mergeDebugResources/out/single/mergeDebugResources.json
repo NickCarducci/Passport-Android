@@ -8,6 +8,10 @@
         "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/xml/data_extraction_rules.xml"
     },
     {
+        "merged": "com.sayists.passport.app-debug-39:/layout_activity_event_detail.xml.flat",
+        "source": "com.sayists.passport.app-main-41:/layout/activity_event_detail.xml"
+    },
+    {
         "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
         "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xxxhdpi/ic_launcher_round.webp"
     },
@@ -20,12 +24,12 @@
         "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-hdpi_ic_launcher_round.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-hdpi/ic_launcher_round.webp"
-    },
-    {
         "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xxhdpi_ic_launcher.webp.flat",
         "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xxhdpi/ic_launcher.webp"
+    },
+    {
+        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-hdpi/ic_launcher_round.webp"
     },
     {
         "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xhdpi_ic_launcher.webp.flat",
@@ -86,10 +90,6 @@
     {
         "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/menu_main_menu.xml.flat",
         "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/menu/main_menu.xml"
-    },
-    {
-        "merged": "com.sayists.passport.app-debug-39:/layout_activity_main.xml.flat",
-        "source": "com.sayists.passport.app-main-41:/layout/activity_main.xml"
     },
     {
         "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/drawable_ic_launcher_foreground.xml.flat",

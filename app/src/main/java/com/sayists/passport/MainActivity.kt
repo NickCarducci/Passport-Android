@@ -20,6 +20,7 @@ import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -473,6 +474,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Long press always opens event detail (directions) regardless of descriptionLink
+        eventList.onItemLongClickListener = android.widget.AdapterView.OnItemLongClickListener { _, _, position, _ ->
+            if (shouldBlockTaps()) return@OnItemLongClickListener true
+            if (position < eventIds.size) {
+                val intent = Intent(applicationContext, EventDetailActivity::class.java)
+                intent.putExtra("eventId", eventIds[position])
+                intent.putExtra("title", eventTitles[position])
+                intent.putExtra("date", eventDates[position])
+                intent.putExtra("location", eventLocations[position])
+                startActivity(intent)
+            }
+            true
+        }
+
         loadEvents()
     }
 
@@ -669,6 +684,13 @@ class MainActivity : AppCompatActivity() {
         return raw
     }
 
+    private fun isValidEventId(eventId: String): Boolean {
+        // Event IDs should be non-empty, reasonable length, and alphanumeric with some special chars
+        if (eventId.isEmpty() || eventId.length > 200) return false
+        // Allow alphanumeric, hyphens, underscores (common Firestore ID chars)
+        return eventId.matches(Regex("^[a-zA-Z0-9_-]+$"))
+    }
+
     private fun isValidHttpsUrl(url: String): Boolean {
         return try {
             val uri = Uri.parse(url)
@@ -682,7 +704,26 @@ class MainActivity : AppCompatActivity() {
     // API
     // ========================================================================
 
+    private fun showErrorDialog(message: String) {
+        runOnUiThread {
+            AlertDialog.Builder(this)
+                .setTitle("Error")
+                .setMessage(message)
+                .setPositiveButton("OK") { _, _ ->
+                    animateToMode(ViewMode.LIST)
+                }
+                .setCancelable(false)
+                .show()
+        }
+    }
+
     private fun attendEventViaApi(eventId: String) {
+        // Validate eventId format
+        if (!isValidEventId(eventId)) {
+            showErrorDialog("Invalid event ID format: '$eventId'\n\nPlease scan a valid QR code from the Passport system.")
+            return
+        }
+
         val user = FirebaseAuth.getInstance().currentUser
 
         // If not signed in, prompt to sign in
@@ -698,22 +739,25 @@ class MainActivity : AppCompatActivity() {
             .addOnSuccessListener { result ->
                 val idToken = result.token
                 if (idToken == null) {
-                    runOnUiThread {
-                        Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show()
-                        animateToMode(ViewMode.LIST)
-                    }
+                    showErrorDialog("Authentication failed - please sign in again")
                     return@addOnSuccessListener
                 }
 
                 Thread {
                     try {
                     // Step 1: Get one-time code
-                    val codeJson = JSONObject().apply { put("eventId", eventId) }
+                    // Ensure eventId is properly typed as string
+                    val codeJson = JSONObject().apply {
+                        put("eventId", eventId.toString().trim())
+                    }
                     val codeConn = (URL("https://pass.contact/api/code").openConnection() as HttpURLConnection).apply {
                         requestMethod = "POST"
                         setRequestProperty("Content-Type", "application/json; charset=utf-8")
                         setRequestProperty("Authorization", "Bearer $idToken")
                         doOutput = true
+                        // Set timeouts to prevent indefinite hangs (30 seconds)
+                        connectTimeout = 30000
+                        readTimeout = 30000
                     }
                     OutputStreamWriter(codeConn.outputStream).use { it.write(codeJson.toString()) }
 
@@ -725,10 +769,7 @@ class MainActivity : AppCompatActivity() {
                             "Request failed with code $codeResponseCode"
                         }
                         codeConn.disconnect()
-                        runOnUiThread {
-                            Toast.makeText(this, "Code API error: $errorMsg", Toast.LENGTH_SHORT).show()
-                            animateToMode(ViewMode.LIST)
-                        }
+                        showErrorDialog("Code API error ($codeResponseCode): $errorMsg\n\nSent data:\n${codeJson.toString(2)}")
                         return@Thread
                     }
 
@@ -743,42 +784,51 @@ class MainActivity : AppCompatActivity() {
                         }
                         return@Thread
                     }
-                    val code = codeRes.optString("code")
+                    val code = codeRes.optString("code", "").trim()
                     if (code.isEmpty()) {
-                        runOnUiThread {
-                            Toast.makeText(this, codeRes.optString("message", "No code"), Toast.LENGTH_SHORT).show()
-                            animateToMode(ViewMode.LIST)
-                        }
+                        val message = codeRes.optString("message", "No code returned from server")
+                        showErrorDialog("$message\n\nServer response:\n${codeRes.toString(2)}")
+                        return@Thread
+                    }
+
+                    // Validate code format (should be alphanumeric)
+                    if (!code.matches(Regex("^[a-zA-Z0-9]+$"))) {
+                        showErrorDialog("Invalid code format received: '$code'\n\nExpected alphanumeric code.")
                         return@Thread
                     }
 
                     // Step 2: Attend with code
                     // Get saved profile data from Firestore (blocking call in background thread)
-                    val studentId = user.email?.substringBefore("@") ?: ""
+                    val studentId = user.email?.substringBefore("@")?.trim() ?: ""
                     var savedFullName = ""
                     var savedAddress = ""
 
                     if (studentId.isNotEmpty()) {
                         try {
                             val leaderDoc = Tasks.await(db.collection("leaders").document(studentId).get())
-                            savedFullName = leaderDoc.getString("fullName") ?: ""
-                            savedAddress = leaderDoc.getString("address") ?: ""
+                            // Ensure we get strings, not null or other types
+                            savedFullName = (leaderDoc.getString("fullName") ?: "").trim()
+                            savedAddress = (leaderDoc.getString("address") ?: "").trim()
                         } catch (e: Exception) {
                             // Continue with empty values if fetch fails
                         }
                     }
 
+                    // Validate all fields are properly typed as strings
                     val attendJson = JSONObject().apply {
-                        put("eventId", eventId)
-                        put("code", code)
-                        put("fullName", savedFullName)
-                        put("address", savedAddress)
+                        put("eventId", eventId.toString().trim())
+                        put("code", code.toString().trim())
+                        put("fullName", savedFullName.toString())
+                        put("address", savedAddress.toString())
                     }
                     val attendConn = (URL("https://pass.contact/api/attend").openConnection() as HttpURLConnection).apply {
                         requestMethod = "POST"
                         setRequestProperty("Content-Type", "application/json; charset=utf-8")
                         setRequestProperty("Authorization", "Bearer $idToken")
                         doOutput = true
+                        // Set timeouts to prevent indefinite hangs (30 seconds)
+                        connectTimeout = 30000
+                        readTimeout = 30000
                     }
                     OutputStreamWriter(attendConn.outputStream).use { it.write(attendJson.toString()) }
                     val attendData = attendConn.inputStream.bufferedReader().readText()
@@ -800,23 +850,16 @@ class MainActivity : AppCompatActivity() {
                                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            Toast.makeText(this, "Server Error", Toast.LENGTH_SHORT).show()
-                            animateToMode(ViewMode.LIST)
+                            showErrorDialog("Server returned error code: $attendCode\n\nResponse: $attendData\n\nSent data:\n${attendJson.toString(2)}")
                         }
                     }
                 } catch (e: IOException) {
-                    runOnUiThread {
-                        Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                        animateToMode(ViewMode.LIST)
-                    }
+                    showErrorDialog("Network error: ${e.message}\n\nStack trace:\n${e.stackTraceToString().take(500)}")
                 }
             }.start()
         }
         .addOnFailureListener { e ->
-            runOnUiThread {
-                Toast.makeText(this, "Token error: ${e.message}", Toast.LENGTH_SHORT).show()
-                animateToMode(ViewMode.LIST)
-            }
+            showErrorDialog("Failed to get authentication token: ${e.message}")
         }
     }
 

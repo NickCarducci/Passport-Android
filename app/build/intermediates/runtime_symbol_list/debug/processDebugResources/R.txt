@@ -3251,6 +3251,7 @@ int id anticipate 0x7f080052
 int id arc 0x7f080053
 int id asConfigured 0x7f080054
 int id async 0x7f080055
+int id attendanceStatusTv 0x7f080223
 int id auto 0x7f080056
 int id autoComplete 0x7f080057
 int id autoCompleteToEnd 0x7f080058

@@ -28,6 +28,7 @@ drawable scholarweek_logo
 id ConfirmedTv
 id addressLine1Et
 id addressLine2Et
+id attendanceStatusTv
 id backBtn
 id cityEt
 id eventDateTv

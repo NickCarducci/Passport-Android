@@ -3,9 +3,12 @@ package com.sayists.passport
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class EventDetailActivity : AppCompatActivity() {
 
@@ -13,6 +16,7 @@ class EventDetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_event_detail)
 
+        val eventId = intent.getStringExtra("eventId") ?: ""
         val title = intent.getStringExtra("title") ?: ""
         val date = intent.getStringExtra("date") ?: ""
         val location = intent.getStringExtra("location") ?: ""
@@ -20,6 +24,37 @@ class EventDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.eventTitleTv).text = title
         findViewById<TextView>(R.id.eventDateTv).text = date
         findViewById<TextView>(R.id.eventLocationTv).text = location
+
+        // Check attendance status
+        val attendanceStatusTv = findViewById<TextView>(R.id.attendanceStatusTv)
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null && eventId.isNotEmpty()) {
+            val db = FirebaseFirestore.getInstance()
+            db.collection("events").document(eventId).get()
+                .addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        val attendees = doc.get("attendees") as? List<*> ?: emptyList<Any>()
+                        val hasAttended = attendees.any {
+                            when (it) {
+                                is String -> it == user.uid
+                                is Map<*, *> -> it["uid"] == user.uid
+                                else -> false
+                            }
+                        }
+                        attendanceStatusTv.text = if (hasAttended) {
+                            "✓ Already Attended"
+                        } else {
+                            "Not Attended Yet"
+                        }
+                        attendanceStatusTv.visibility = View.VISIBLE
+                    }
+                }
+                .addOnFailureListener {
+                    attendanceStatusTv.visibility = View.GONE
+                }
+        } else {
+            attendanceStatusTv.visibility = View.GONE
+        }
 
         // Open directions in Google Maps
         findViewById<Button>(R.id.getDirectionsBtn).setOnClickListener {
