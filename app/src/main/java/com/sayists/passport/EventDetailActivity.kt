@@ -8,7 +8,9 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class EventDetailActivity : AppCompatActivity() {
 
@@ -25,30 +27,58 @@ class EventDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.eventDateTv).text = date
         findViewById<TextView>(R.id.eventLocationTv).text = location
 
-        // Check attendance status
+        // Check attendance status (server-side via Admin SDK)
         val attendanceStatusTv = findViewById<TextView>(R.id.attendanceStatusTv)
         val user = FirebaseAuth.getInstance().currentUser
-        val studentId = user?.email?.split("@")?.firstOrNull() ?: ""
-        if (studentId.isNotEmpty() && eventId.isNotEmpty()) {
-            val db = FirebaseFirestore.getInstance()
-            db.collection("events").document(eventId).get()
-                .addOnSuccessListener { doc ->
-                    if (doc.exists()) {
-                        val attendees = doc.get("attendees") as? List<*> ?: emptyList<Any>()
-                        val hasAttended = attendees.contains(studentId)
-                        attendanceStatusTv.text = if (hasAttended) {
-                            "✓ Already Attended"
-                        } else {
-                            "Not Attended Yet"
-                        }
-                        attendanceStatusTv.visibility = View.VISIBLE
+        if (user == null || eventId.isEmpty()) {
+            attendanceStatusTv.visibility = View.GONE
+        } else {
+            user.getIdToken(false)
+                .addOnSuccessListener { result ->
+                    val idToken = result.token ?: ""
+                    if (idToken.isEmpty()) {
+                        attendanceStatusTv.visibility = View.GONE
+                        return@addOnSuccessListener
                     }
+                    Thread {
+                        try {
+                            val url = URL("https://pass.contact/api/status?eventId=${Uri.encode(eventId)}")
+                            val conn = (url.openConnection() as HttpURLConnection).apply {
+                                requestMethod = "GET"
+                                setRequestProperty("Authorization", "Bearer $idToken")
+                                connectTimeout = 15000
+                                readTimeout = 15000
+                            }
+                            val code = conn.responseCode
+                            val body = if (code in 200..299) {
+                                conn.inputStream.bufferedReader().readText()
+                            } else {
+                                conn.errorStream?.bufferedReader()?.readText() ?: ""
+                            }
+                            conn.disconnect()
+
+                            if (code in 200..299) {
+                                val json = JSONObject(body)
+                                val hasAttended = json.optBoolean("hasAttended", false)
+                                runOnUiThread {
+                                    attendanceStatusTv.text = if (hasAttended) {
+                                        "✓ Already Attended"
+                                    } else {
+                                        "Not Attended Yet"
+                                    }
+                                    attendanceStatusTv.visibility = View.VISIBLE
+                                }
+                            } else {
+                                runOnUiThread { attendanceStatusTv.visibility = View.GONE }
+                            }
+                        } catch (e: Exception) {
+                            runOnUiThread { attendanceStatusTv.visibility = View.GONE }
+                        }
+                    }.start()
                 }
                 .addOnFailureListener {
                     attendanceStatusTv.visibility = View.GONE
                 }
-        } else {
-            attendanceStatusTv.visibility = View.GONE
         }
 
         // Open directions in Google Maps
