@@ -28,19 +28,14 @@ class EventDetailActivity : AppCompatActivity() {
         // Check attendance status
         val attendanceStatusTv = findViewById<TextView>(R.id.attendanceStatusTv)
         val user = FirebaseAuth.getInstance().currentUser
-        if (user != null && eventId.isNotEmpty()) {
+        val studentId = user?.email?.split("@")?.firstOrNull() ?: ""
+        if (studentId.isNotEmpty() && eventId.isNotEmpty()) {
             val db = FirebaseFirestore.getInstance()
             db.collection("events").document(eventId).get()
                 .addOnSuccessListener { doc ->
                     if (doc.exists()) {
                         val attendees = doc.get("attendees") as? List<*> ?: emptyList<Any>()
-                        val hasAttended = attendees.any {
-                            when (it) {
-                                is String -> it == user.uid
-                                is Map<*, *> -> it["uid"] == user.uid
-                                else -> false
-                            }
-                        }
+                        val hasAttended = attendees.contains(studentId)
                         attendanceStatusTv.text = if (hasAttended) {
                             "✓ Already Attended"
                         } else {
