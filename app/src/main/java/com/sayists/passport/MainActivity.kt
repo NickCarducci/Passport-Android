@@ -1,9 +1,15 @@
 package com.sayists.passport
 
+import android.Manifest
 import android.animation.ValueAnimator
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.PointF
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -17,29 +23,43 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ListView
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.google.android.gms.common.moduleinstall.ModuleInstall
-import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
+import com.google.android.material.color.MaterialColors
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanner
-import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
-import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 import org.json.JSONObject
 import java.io.IOException
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.ByteBuffer
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 // data class Event(val title: String = "", val location: String = "", val date: String = "")
 
@@ -82,9 +102,40 @@ class MainActivity : AppCompatActivity() {
     private lateinit var leaderboardPanel: View
     private lateinit var scannerPanel: View
     private lateinit var floatingNavBtn: TextView
+    private lateinit var previewOverlay: View
+    private lateinit var previewLogoutBtn: Button
+    private var isPreviewMode = false
+
+    private lateinit var usernameDivider: View
+    private lateinit var fullNameDivider: View
+    private lateinit var addressLine1Divider: View
+    private lateinit var addressLine2Divider: View
+    private lateinit var cityDivider: View
+    private lateinit var stateDivider: View
+    private lateinit var zipDivider: View
+
+    private var firestoreUsername = ""
+    private var firestoreFullName = ""
+    private var firestoreAddressLine1 = ""
+    private var firestoreAddressLine2 = ""
+    private var firestoreCity = ""
+    private var firestoreState = ""
+    private var firestoreZip = ""
 
     // --- Scanner ---
-    private lateinit var scanner: GmsBarcodeScanner
+    private lateinit var previewView: PreviewView
+    private lateinit var scanHintTv: TextView
+    private lateinit var barcodeScanner: BarcodeScanner
+    private var cameraProvider: ProcessCameraProvider? = null
+    private var analysisUseCase: ImageAnalysis? = null
+    private var previewUseCase: Preview? = null
+    private lateinit var analysisExecutor: ExecutorService
+    private var isScannerActive = false
+    private var scanLocked = false
+    private val scanHintHandler = Handler(Looper.getMainLooper())
+    private var scanHintReset: Runnable? = null
+    //private var lastHintAt = 0L
+    private val cameraPermissionRequest = 1001
 
     // --- Data ---
     private val db = FirebaseFirestore.getInstance()
@@ -111,6 +162,11 @@ class MainActivity : AppCompatActivity() {
         leaderboardPanel = findViewById(R.id.leaderboardView)
         scannerPanel = findViewById(R.id.scannerView)
         floatingNavBtn = findViewById(R.id.floatingNavBtn)
+        previewOverlay = findViewById(R.id.previewOverlay)
+        previewLogoutBtn = findViewById(R.id.previewLogoutBtn)
+        previewView = findViewById(R.id.scannerPreview)
+        scanHintTv = findViewById(R.id.scanHintTv)
+        val profileScroll = findViewById<ScrollView>(R.id.profileScroll)
 
         // Edge-to-edge insets
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.focalContainer)) { v, insets ->
@@ -119,17 +175,20 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Scanner setup
-        val options = GmsBarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .enableAutoZoom()
-            .build()
-        scanner = GmsBarcodeScanning.getClient(this, options)
+        // Add bottom padding when IME is visible so fields stay scrollable
+        val baseProfilePadding = profileScroll.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(profileScroll) { v, insets ->
+            val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, max(baseProfilePadding, imeBottom))
+            insets
+        }
 
-        val moduleInstallRequest = ModuleInstallRequest.newBuilder()
-            .addApi(GmsBarcodeScanning.getClient(this))
+        // Scanner setup
+        analysisExecutor = Executors.newSingleThreadExecutor()
+        val options = BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
             .build()
-        ModuleInstall.getClient(this).installModules(moduleInstallRequest)
+        barcodeScanner = BarcodeScanning.getClient(options)
 
         // Back button (modern API)
         onBackPressedDispatcher.addCallback(this,
@@ -151,8 +210,32 @@ class MainActivity : AppCompatActivity() {
         setupScanner()
         setupNavButtons()
 
+        isPreviewMode = intent.getBooleanExtra("previewMode", false)
+        if (isPreviewMode) {
+            previewOverlay.visibility = View.VISIBLE
+            previewLogoutBtn.setOnClickListener {
+                FirebaseAuth.getInstance().signOut()
+                startActivity(Intent(applicationContext, LoginActivity::class.java))
+                finish()
+            }
+        } else {
+            previewOverlay.visibility = View.GONE
+        }
+
         // Initial positioning (no animation)
-        positionViewsImmediate(ViewMode.LIST)
+        positionViewsImmediate()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopCamera()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopCamera()
+        barcodeScanner.close()
+        analysisExecutor.shutdown()
     }
 
     // ========================================================================
@@ -315,8 +398,8 @@ class MainActivity : AppCompatActivity() {
             (if (currentMode == ViewMode.SCANNER) 0f else sh) + verticalOffset
     }
 
-    private fun positionViewsImmediate(mode: ViewMode = ViewMode.LIST) {
-        currentMode = mode
+    private fun positionViewsImmediate() {
+        currentMode = ViewMode.LIST
         horizontalOffset = 0f
         verticalOffset = 0f
         updateViewTranslations()
@@ -324,6 +407,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun animateToMode(newMode: ViewMode) {
+        val previousMode = currentMode
+        if (previousMode == ViewMode.SCANNER && newMode != ViewMode.SCANNER) {
+            stopCamera()
+        }
         // Capture current pixel positions
         data class Pos(val tx: Float, val ty: Float)
 
@@ -538,7 +625,7 @@ class MainActivity : AppCompatActivity() {
 
                 val leaderNames = ArrayList<String>()
                 for (doc in value!!) {
-                    val studentId = doc.id
+                    //val studentId = doc.id
                     val username = doc.getString("username")
                     val eventsAttended = doc.getLong("eventsAttended")
                     val displayName = if (!username.isNullOrEmpty()) username else "Anonymous"
@@ -567,38 +654,132 @@ class MainActivity : AppCompatActivity() {
         val cityEt = findViewById<EditText>(R.id.cityEt)
         val stateEt = findViewById<EditText>(R.id.stateEt)
         val zipCodeEt = findViewById<EditText>(R.id.zipCodeEt)
+        usernameDivider = findViewById(R.id.usernameDivider)
+        fullNameDivider = findViewById(R.id.fullNameDivider)
+        addressLine1Divider = findViewById(R.id.addressLine1Divider)
+        addressLine2Divider = findViewById(R.id.addressLine2Divider)
+        cityDivider = findViewById(R.id.cityDivider)
+        stateDivider = findViewById(R.id.stateDivider)
+        zipDivider = findViewById(R.id.zipDivider)
+
+        val prefs = getSharedPreferences("profile_draft", MODE_PRIVATE)
+        val outlineColor = MaterialColors.getColor(
+            usernameDivider,
+            com.google.android.material.R.attr.colorOutline
+        )
+        val highlightColor = ContextCompat.getColor(this, R.color.mu_blue)
+
+        fun normalize(value: String): String = value.trim()
+
+        fun updateDivider(divider: View, dirty: Boolean) {
+            divider.setBackgroundColor(if (dirty) highlightColor else outlineColor)
+        }
+
+        fun updateIndicators() {
+            updateDivider(usernameDivider, normalize(usernameEt.text.toString()) != normalize(firestoreUsername))
+            updateDivider(fullNameDivider, normalize(fullNameEt.text.toString()) != normalize(firestoreFullName))
+            updateDivider(addressLine1Divider, normalize(addressLine1Et.text.toString()) != normalize(firestoreAddressLine1))
+            updateDivider(addressLine2Divider, normalize(addressLine2Et.text.toString()) != normalize(firestoreAddressLine2))
+            updateDivider(cityDivider, normalize(cityEt.text.toString()) != normalize(firestoreCity))
+            updateDivider(stateDivider, normalize(stateEt.text.toString()) != normalize(firestoreState))
+            updateDivider(zipDivider, normalize(zipCodeEt.text.toString()) != normalize(firestoreZip))
+        }
+
+        usernameEt.doAfterTextChanged { updateIndicators() }
+        fullNameEt.doAfterTextChanged { updateIndicators() }
+        addressLine1Et.doAfterTextChanged { updateIndicators() }
+        addressLine2Et.doAfterTextChanged { updateIndicators() }
+        cityEt.doAfterTextChanged { updateIndicators() }
+        stateEt.doAfterTextChanged { updateIndicators() }
+        zipCodeEt.doAfterTextChanged { updateIndicators() }
 
         // Load profile data from Firestore
         if (studentId.isNotEmpty()) {
             db.collection("leaders").document(studentId).get()
                 .addOnSuccessListener { doc ->
                     if (doc.exists()) {
-                        usernameEt.setText(doc.getString("username") ?: "")
-                        fullNameEt.setText(doc.getString("fullName") ?: "")
+                        firestoreUsername = doc.getString("username") ?: ""
+                        firestoreFullName = doc.getString("fullName") ?: ""
+                        if (firestoreUsername.isNotEmpty()) {
+                            usernameEt.setText(firestoreUsername)
+                        } else {
+                            usernameEt.setText(prefs.getString("username", "") ?: "")
+                        }
+                        if (firestoreFullName.isNotEmpty()) {
+                            fullNameEt.setText(firestoreFullName)
+                        } else {
+                            fullNameEt.setText(prefs.getString("fullName", "") ?: "")
+                        }
 
                         // Parse address if it exists
-                        val address = doc.getString("address") ?: ""
+                        val address = (doc.getString("address") ?: "").trim()
                         if (address.isNotEmpty()) {
-                            val parts = address.split(", ")
-                            if (parts.size >= 4) {
-                                addressLine1Et.setText(parts[0])
-                                val hasLine2 = parts.size == 5
+                            val parts = address.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                            if (parts.size >= 3) {
+                                firestoreAddressLine1 = parts[0]
+                                val hasLine2 = parts.size > 3
                                 if (hasLine2) {
-                                    addressLine2Et.setText(parts[1])
-                                    cityEt.setText(parts[2])
-                                    val stateZip = parts[3].split(" ")
-                                    stateEt.setText(stateZip.getOrNull(0) ?: "")
-                                    zipCodeEt.setText(stateZip.getOrNull(1) ?: "")
+                                    firestoreAddressLine2 = parts[1]
+                                    firestoreCity = parts.getOrNull(2) ?: ""
+                                    val stateZip = parts.getOrNull(3) ?: ""
+                                    val stateZipParts = stateZip.split(" ").filter { it.isNotEmpty() }
+                                    firestoreState = stateZipParts.getOrNull(0) ?: ""
+                                    firestoreZip = stateZipParts.getOrNull(1) ?: ""
                                 } else {
-                                    cityEt.setText(parts[1])
-                                    val stateZip = parts[2].split(" ")
-                                    stateEt.setText(stateZip.getOrNull(0) ?: "")
-                                    zipCodeEt.setText(stateZip.getOrNull(1) ?: "")
+                                    firestoreAddressLine2 = ""
+                                    firestoreCity = parts.getOrNull(1) ?: ""
+                                    val stateZip = parts.getOrNull(2) ?: ""
+                                    val stateZipParts = stateZip.split(" ").filter { it.isNotEmpty() }
+                                    firestoreState = stateZipParts.getOrNull(0) ?: ""
+                                    firestoreZip = stateZipParts.getOrNull(1) ?: ""
                                 }
+
+                                addressLine1Et.setText(firestoreAddressLine1)
+                                addressLine2Et.setText(firestoreAddressLine2)
+                                cityEt.setText(firestoreCity)
+                                stateEt.setText(firestoreState)
+                                zipCodeEt.setText(firestoreZip)
                             }
+                        } else {
+                            firestoreAddressLine1 = ""
+                            firestoreAddressLine2 = ""
+                            firestoreCity = ""
+                            firestoreState = ""
+                            firestoreZip = ""
+                            addressLine1Et.setText(prefs.getString("addressLine1", "") ?: "")
+                            addressLine2Et.setText(prefs.getString("addressLine2", "") ?: "")
+                            cityEt.setText(prefs.getString("city", "") ?: "")
+                            stateEt.setText(prefs.getString("state", "") ?: "")
+                            zipCodeEt.setText(prefs.getString("zipCode", "") ?: "")
                         }
+                        updateIndicators()
+                    } else {
+                        firestoreUsername = ""
+                        firestoreFullName = ""
+                        firestoreAddressLine1 = ""
+                        firestoreAddressLine2 = ""
+                        firestoreCity = ""
+                        firestoreState = ""
+                        firestoreZip = ""
+                        usernameEt.setText(prefs.getString("username", "") ?: "")
+                        fullNameEt.setText(prefs.getString("fullName", "") ?: "")
+                        addressLine1Et.setText(prefs.getString("addressLine1", "") ?: "")
+                        addressLine2Et.setText(prefs.getString("addressLine2", "") ?: "")
+                        cityEt.setText(prefs.getString("city", "") ?: "")
+                        stateEt.setText(prefs.getString("state", "") ?: "")
+                        zipCodeEt.setText(prefs.getString("zipCode", "") ?: "")
+                        updateIndicators()
                     }
                 }
+        } else {
+            usernameEt.setText(prefs.getString("username", "") ?: "")
+            fullNameEt.setText(prefs.getString("fullName", "") ?: "")
+            addressLine1Et.setText(prefs.getString("addressLine1", "") ?: "")
+            addressLine2Et.setText(prefs.getString("addressLine2", "") ?: "")
+            cityEt.setText(prefs.getString("city", "") ?: "")
+            stateEt.setText(prefs.getString("state", "") ?: "")
+            zipCodeEt.setText(prefs.getString("zipCode", "") ?: "")
+            updateIndicators()
         }
 
         // Save profile
@@ -623,6 +804,16 @@ class MainActivity : AppCompatActivity() {
                     ""
                 }
 
+                prefs.edit()
+                    .putString("username", username)
+                    .putString("fullName", fullName)
+                    .putString("addressLine1", line1)
+                    .putString("addressLine2", line2)
+                    .putString("city", city)
+                    .putString("state", state)
+                    .putString("zipCode", zip)
+                    .apply()
+
                 db.collection("leaders").document(studentId)
                     .set(
                         hashMapOf(
@@ -633,6 +824,14 @@ class MainActivity : AppCompatActivity() {
                         com.google.firebase.firestore.SetOptions.merge()
                     )
                     .addOnSuccessListener {
+                        firestoreUsername = username
+                        firestoreFullName = fullName
+                        firestoreAddressLine1 = line1
+                        firestoreAddressLine2 = line2
+                        firestoreCity = city
+                        firestoreState = state
+                        firestoreZip = zip
+                        updateIndicators()
                         Toast.makeText(this, "Profile saved", Toast.LENGTH_SHORT).show()
                     }
                     .addOnFailureListener {
@@ -658,20 +857,284 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchScanner() {
-        scanner.startScan()
-            .addOnSuccessListener { barcode ->
-                barcode.rawValue?.let { raw ->
+        if (!hasCameraPermission()) {
+            requestCameraPermission()
+            return
+        }
+        startCamera()
+    }
+
+    private fun hasCameraPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestCameraPermission() {
+        requestPermissions(arrayOf(Manifest.permission.CAMERA), cameraPermissionRequest)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == cameraPermissionRequest) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCamera()
+            } else {
+                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_LONG).show()
+                animateToMode(ViewMode.LIST)
+            }
+        }
+    }
+
+    private fun startCamera() {
+        if (isScannerActive) return
+        isScannerActive = true
+        scanLocked = false
+        setScanHint("Point at a Passport event QR code")
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener({
+            val provider = cameraProviderFuture.get()
+            cameraProvider = provider
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+            val analysis = ImageAnalysis.Builder()
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build()
+            analysis.setAnalyzer(analysisExecutor) { imageProxy ->
+                processImage(imageProxy)
+            }
+            provider.unbindAll()
+            provider.bindToLifecycle(
+                this,
+                CameraSelector.DEFAULT_BACK_CAMERA,
+                preview,
+                analysis
+            )
+            previewUseCase = preview
+            analysisUseCase = analysis
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    private fun stopCamera() {
+        if (!isScannerActive) return
+        isScannerActive = false
+        scanLocked = true
+        analysisUseCase?.clearAnalyzer()
+        cameraProvider?.unbindAll()
+        runOnUiThread {
+            scanHintReset?.let { scanHintHandler.removeCallbacks(it) }
+            scanHintTv.text = "Tap to launch scanner\nScreen scans off"
+        }
+    }
+
+    private data class FrameLuma(
+        val buffer: ByteBuffer,
+        val width: Int,
+        val height: Int,
+        val rowStride: Int,
+        val pixelStride: Int
+    )
+
+    private fun processImage(imageProxy: ImageProxy) {
+        if (!isScannerActive || scanLocked) {
+            imageProxy.close()
+            return
+        }
+        val mediaImage = imageProxy.image
+        if (mediaImage == null) {
+            imageProxy.close()
+            return
+        }
+        val inputImage = InputImage.fromMediaImage(
+            mediaImage,
+            imageProxy.imageInfo.rotationDegrees
+        )
+        barcodeScanner.process(inputImage)
+            .addOnSuccessListener { barcodes ->
+                val barcode = barcodes.firstOrNull { it.format == Barcode.FORMAT_QR_CODE }
+                val raw = barcode?.rawValue
+                val box = barcode?.boundingBox
+                if (raw != null && box != null && !scanLocked) {
+                    val yPlane = mediaImage.planes[0]
+                    val frame = FrameLuma(
+                        yPlane.buffer.duplicate(),
+                        mediaImage.width,
+                        mediaImage.height,
+                        yPlane.rowStride,
+                        yPlane.pixelStride
+                    )
+                    val mappedBox = mapRectToImageSpace(
+                        box,
+                        imageProxy.imageInfo.rotationDegrees,
+                        frame.width,
+                        frame.height
+                    )
+                    val whiteOk = passesWhiteBorderCheck(frame, mappedBox)
+                    val textureOk = passesTextureCheck(frame, mappedBox)
+                    if (!whiteOk || !textureOk) {
+                        if (!whiteOk && !textureOk) {
+                            setScanHint("Needs white paper and the official printout.")
+                        } else if (!whiteOk) {
+                            setScanHint("Place the QR on white paper under bright light.")
+                        } else {
+                            setScanHint("Printed QR texture missing. Use the official printout.")
+                        }
+                        return@addOnSuccessListener
+                    }
+                    scanLocked = true
                     val eventId = extractEventId(raw)
+                    stopCamera()
                     animateToMode(ViewMode.LIST)
                     attendEventViaApi(eventId)
                 }
             }
-            .addOnCanceledListener {
-                animateToMode(ViewMode.LIST)
-            }
             .addOnFailureListener {
-                animateToMode(ViewMode.LIST)
+                // Keep scanning; no-op
             }
+            .addOnCompleteListener {
+                imageProxy.close()
+            }
+    }
+
+    private fun mapRectToImageSpace(
+        rect: Rect,
+        rotationDegrees: Int,
+        width: Int,
+        height: Int
+    ): Rect {
+        val points = listOf(
+            PointF(rect.left.toFloat(), rect.top.toFloat()),
+            PointF(rect.right.toFloat(), rect.top.toFloat()),
+            PointF(rect.left.toFloat(), rect.bottom.toFloat()),
+            PointF(rect.right.toFloat(), rect.bottom.toFloat())
+        )
+        val mapped = points.map { p ->
+            when (rotationDegrees) {
+                90 -> PointF(p.y, height - p.x - 1)
+                180 -> PointF(width - p.x - 1, height - p.y - 1)
+                270 -> PointF(width - p.y - 1, p.x)
+                else -> PointF(p.x, p.y)
+            }
+        }
+        val minX = mapped.minOf { it.x }.toInt()
+        val maxX = mapped.maxOf { it.x }.toInt()
+        val minY = mapped.minOf { it.y }.toInt()
+        val maxY = mapped.maxOf { it.y }.toInt()
+        return Rect(
+            max(0, minX),
+            max(0, minY),
+            min(width - 1, maxX),
+            min(height - 1, maxY)
+        )
+    }
+
+    private fun setScanHint(message: String) {
+        runOnUiThread {
+            scanHintTv.text = "$message\nScreen scans off"
+            scanHintReset?.let { scanHintHandler.removeCallbacks(it) }
+            val reset = Runnable {
+                scanHintTv.text = "Point at a Passport event QR code\nScreen scans off"
+            }
+            scanHintReset = reset
+            scanHintHandler.postDelayed(reset, 2500)
+        }
+    }
+
+    private fun lumaAt(frame: FrameLuma, x: Int, y: Int): Int {
+        if (x < 0 || y < 0 || x >= frame.width || y >= frame.height) return 0
+        val index = y * frame.rowStride + x * frame.pixelStride
+        if (index < 0 || index >= frame.buffer.capacity()) return 0
+        return frame.buffer.get(index).toInt() and 0xFF
+    }
+
+    private fun passesWhiteBorderCheck(frame: FrameLuma, box: Rect): Boolean {
+        val minX = max(0, box.left)
+        val minY = max(0, box.top)
+        val maxX = min(frame.width - 1, box.right)
+        val maxY = min(frame.height - 1, box.bottom)
+        if (maxX <= minX || maxY <= minY) return false
+
+        val boxW = maxX - minX
+        val boxH = maxY - minY
+        val margin = max(6, (min(boxW, boxH) * 0.08).toInt())
+        val ringMinX = max(0, minX - margin)
+        val ringMinY = max(0, minY - margin)
+        val ringMaxX = min(frame.width - 1, maxX + margin)
+        val ringMaxY = min(frame.height - 1, maxY + margin)
+
+        var whiteCount = 0
+        var total = 0
+        val step = 2
+        var y = ringMinY
+        while (y <= ringMaxY) {
+            var x = ringMinX
+            while (x <= ringMaxX) {
+                val inBox = x in minX..maxX && y in minY..maxY
+                if (!inBox) {
+                    val luma = lumaAt(frame, x, y)
+                    total++
+                    if (luma >= 230) whiteCount++
+                }
+                x += step
+            }
+            y += step
+        }
+        if (total == 0) return false
+        return whiteCount.toDouble() / total >= 0.7
+    }
+
+    private fun passesTextureCheck(frame: FrameLuma, box: Rect): Boolean {
+        val minX = max(0, box.left)
+        val minY = max(0, box.top)
+        val maxX = min(frame.width - 1, box.right)
+        val maxY = min(frame.height - 1, box.bottom)
+        if (maxX <= minX || maxY <= minY) return false
+
+        val boxW = maxX - minX
+        val boxH = maxY - minY
+        val inset = max(6, (min(boxW, boxH) * 0.08).toInt())
+        val startX = minX + inset
+        val endX = maxX - inset
+        val startY = minY + inset
+        val endY = maxY - inset
+        if (endX <= startX || endY <= startY) return false
+
+        var count = 0
+        var mean = 0.0
+        var m2 = 0.0
+        var deviation = 0.0
+        val step = 2
+        var y = startY
+        while (y <= endY) {
+            var x = startX
+            while (x <= endX) {
+                val luma = lumaAt(frame, x, y).toDouble()
+                if (luma >= 200) {
+                    val lumaRight = lumaAt(frame, min(x + 1, frame.width - 1), y).toDouble()
+                    val lumaDown = lumaAt(frame, x, min(y + 1, frame.height - 1)).toDouble()
+                    val gradient = abs(luma - lumaRight) + abs(luma - lumaDown)
+                    if (gradient <= 12) {
+                        count++
+                        val delta = luma - mean
+                        mean += delta / count
+                        m2 += delta * (luma - mean)
+                        deviation += abs(luma - (lumaRight + lumaDown) / 2.0)
+                    }
+                }
+                x += step
+            }
+            y += step
+        }
+        if (count < 160) return false
+        val variance = m2 / max(1, count - 1)
+        val avgDeviation = deviation / count
+        return variance >= 14 && avgDeviation >= 4
     }
 
     private fun extractEventId(raw: String): String {
@@ -745,59 +1208,7 @@ class MainActivity : AppCompatActivity() {
 
                 Thread {
                     try {
-                    // Step 1: Get one-time code
-                    // Ensure eventId is properly typed as string
-                    val codeJson = JSONObject().apply {
-                        put("eventId", eventId.toString().trim())
-                    }
-                    val codeConn = (URL("https://pass.contact/api/code").openConnection() as HttpURLConnection).apply {
-                        requestMethod = "POST"
-                        setRequestProperty("Content-Type", "application/json; charset=utf-8")
-                        setRequestProperty("Authorization", "Bearer $idToken")
-                        doOutput = true
-                        // Set timeouts to prevent indefinite hangs (30 seconds)
-                        connectTimeout = 30000
-                        readTimeout = 30000
-                    }
-                    OutputStreamWriter(codeConn.outputStream).use { it.write(codeJson.toString()) }
-
-                    val codeResponseCode = codeConn.responseCode
-                    if (codeResponseCode !in 200..299) {
-                        val errorMsg = try {
-                            codeConn.errorStream?.bufferedReader()?.readText() ?: "Request failed"
-                        } catch (e: Exception) {
-                            "Request failed with code $codeResponseCode"
-                        }
-                        codeConn.disconnect()
-                        showErrorDialog("Code API error ($codeResponseCode): $errorMsg\n\nSent data:\n${codeJson.toString(2)}")
-                        return@Thread
-                    }
-
-                    val codeData = codeConn.inputStream.bufferedReader().readText()
-                    codeConn.disconnect()
-                    val codeRes = JSONObject(codeData)
-
-                    if (codeRes.optString("message") == "already attended.") {
-                        runOnUiThread {
-                            Toast.makeText(this, "You already attended this event", Toast.LENGTH_LONG).show()
-                            animateToMode(ViewMode.LIST)
-                        }
-                        return@Thread
-                    }
-                    val code = codeRes.optString("code", "").trim()
-                    if (code.isEmpty()) {
-                        val message = codeRes.optString("message", "No code returned from server")
-                        showErrorDialog("$message\n\nServer response:\n${codeRes.toString(2)}")
-                        return@Thread
-                    }
-
-                    // Validate code format (should be alphanumeric)
-                    if (!code.matches(Regex("^[a-zA-Z0-9]+$"))) {
-                        showErrorDialog("Invalid code format received: '$code'\n\nExpected alphanumeric code.")
-                        return@Thread
-                    }
-
-                    // Step 2: Attend with code
+                    // Step 1: Attend directly (no one-time code)
                     // Get saved profile data from Firestore (blocking call in background thread)
                     val studentId = user.email?.substringBefore("@")?.trim() ?: ""
                     var savedFullName = ""
@@ -816,10 +1227,9 @@ class MainActivity : AppCompatActivity() {
 
                     // Validate all fields are properly typed as strings
                     val attendJson = JSONObject().apply {
-                        put("eventId", eventId.toString().trim())
-                        put("code", code.toString().trim())
-                        put("fullName", savedFullName.toString())
-                        put("address", savedAddress.toString())
+                        put("eventId", eventId.trim())
+                        put("fullName", savedFullName)
+                        put("address", savedAddress)
                     }
                     val attendConn = (URL("https://pass.contact/api/attend").openConnection() as HttpURLConnection).apply {
                         requestMethod = "POST"

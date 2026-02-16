@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="md_theme_dark_onPrimary">#00315E</color>
+    <color name="md_theme_dark_onPrimaryContainer">#D4E3FF</color>
+    <color name="md_theme_dark_onSecondary">#273141</color>
+    <color name="md_theme_dark_onSurface">#E3E2E6</color>
+    <color name="md_theme_dark_primary">#A5C8FF</color>
+    <color name="md_theme_dark_primaryContainer">#004785</color>
+    <color name="md_theme_dark_secondary">#BDC7DC</color>
+    <color name="md_theme_dark_surface">#1A1C1E</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_onPrimaryContainer">#001B3D</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_onSurface">#1A1C1E</color>
+    <color name="md_theme_light_primary">#002F6C</color>
+    <color name="md_theme_light_primaryContainer">#D4E3FF</color>
+    <color name="md_theme_light_secondary">#555F71</color>
+    <color name="md_theme_light_surface">#FAFAFA</color>
+    <color name="mu_blue">#002F6C</color>
+    <color name="mu_blue_dark">#001B3D</color>
+    <color name="mu_blue_light">#1A4D8F</color>
+    <color name="mu_gray">#5A6E82</color>
+    <color name="white">#FFFFFFFF</color>
+    <string name="app_name">Passport</string>
+    <string name="default_web_client_id" translatable="false">712511258077-1v2njfks16qmie65e0f704hrql97lo1j.apps.googleusercontent.com</string>
+    <string name="footer_back">back</string>
+    <string name="footer_scan">scan</string>
+    <string name="gcm_defaultSenderId" translatable="false">712511258077</string>
+    <string name="google_api_key" translatable="false">AIzaSyAOFAoaQAjnGo_LeSK0uBHL8IR_sAeyz7c</string>
+    <string name="google_app_id" translatable="false">1:712511258077:android:3e40302a1a38d394a34a34</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAOFAoaQAjnGo_LeSK0uBHL8IR_sAeyz7c</string>
+    <string name="google_storage_bucket" translatable="false">passport-s0989374.firebasestorage.app</string>
+    <string name="project_id" translatable="false">passport-s0989374</string>
+    <string name="scan_prompt">Scan a QR code</string>
+    <style name="Base.Theme.Passport" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/md_theme_light_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_light_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_light_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_light_onPrimaryContainer</item>
+        <item name="colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_light_onSecondary</item>
+        <item name="colorSurface">@color/md_theme_light_surface</item>
+        <item name="colorOnSurface">@color/md_theme_light_onSurface</item>
+    </style>
+    <style name="Theme.Passport" parent="Base.Theme.Passport"/>
+</resources>

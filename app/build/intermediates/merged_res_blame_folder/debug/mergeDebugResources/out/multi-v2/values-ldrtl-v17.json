@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.sayists.passport.app-mergeDebugResources-37:/values-ldrtl-v17/values-ldrtl-v17.xml",
+            "outputFile": "com.sayists.passport.app-mergeDebugResources-42:/values-ldrtl-v17/values-ldrtl-v17.xml",
             "map": [
                 {
-                    "source": "/Users/nicholascarducci/.gradle/caches/transforms-4/056b4bd2247c90dbfdf9c413dc7bbd4f/transformed/material-1.12.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
+                    "source": "/Users/nicholascarducci/.gradle/caches/transforms-4/cf09dd8b3b891753393fb2c8cb03606b/transformed/material-1.12.0/res/values-ldrtl-v17/values-ldrtl-v17.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",

@@ -1,8 +1,0 @@
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/PhoneNumberActivity.kt
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/LeaderboardActivity.kt
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/WebviewActivity.kt
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/LoginActivity.kt
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/ConfirmationActivity.kt
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/OtpActivity.kt
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/AddressActivity.kt
-/Users/nicholascarducci/Desktop/passport/Android/app/src/main/java/com/sayists/passport/MainActivity.kt

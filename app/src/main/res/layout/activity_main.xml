@@ -8,12 +8,16 @@
     tools:context=".MainActivity">
 
     <!-- PROFILE VIEW (left underlay) -->
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/profileView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:background="?attr/colorSurface">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
         <TextView
             android:layout_width="match_parent"
@@ -60,6 +64,7 @@
 
         <!-- ScrollView for form fields -->
         <ScrollView
+            android:id="@+id/profileScroll"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -95,8 +100,9 @@
                     android:background="@null" />
 
                 <View
+                    android:id="@+id/usernameDivider"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="2dp"
                     android:background="?attr/colorOutline"
                     android:alpha="0.2"
                     android:layout_marginHorizontal="16dp" />
@@ -125,8 +131,9 @@
                     android:background="@null" />
 
                 <View
+                    android:id="@+id/fullNameDivider"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="2dp"
                     android:background="?attr/colorOutline"
                     android:alpha="0.2"
                     android:layout_marginHorizontal="16dp" />
@@ -143,8 +150,9 @@
                     android:background="@null" />
 
                 <View
+                    android:id="@+id/addressLine1Divider"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="2dp"
                     android:background="?attr/colorOutline"
                     android:alpha="0.2"
                     android:layout_marginHorizontal="16dp" />
@@ -161,8 +169,9 @@
                     android:background="@null" />
 
                 <View
+                    android:id="@+id/addressLine2Divider"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="2dp"
                     android:background="?attr/colorOutline"
                     android:alpha="0.2"
                     android:layout_marginHorizontal="16dp" />
@@ -179,8 +188,9 @@
                     android:background="@null" />
 
                 <View
+                    android:id="@+id/cityDivider"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="2dp"
                     android:background="?attr/colorOutline"
                     android:alpha="0.2"
                     android:layout_marginHorizontal="16dp" />
@@ -197,8 +207,9 @@
                     android:background="@null" />
 
                 <View
+                    android:id="@+id/stateDivider"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="2dp"
                     android:background="?attr/colorOutline"
                     android:alpha="0.2"
                     android:layout_marginHorizontal="16dp" />
@@ -215,8 +226,9 @@
                     android:background="@null" />
 
                 <View
+                    android:id="@+id/zipDivider"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp"
+                    android:layout_height="2dp"
                     android:background="?attr/colorOutline"
                     android:alpha="0.2"
                     android:layout_marginHorizontal="16dp" />
@@ -251,7 +263,25 @@
             android:layout_gravity="start"
             android:layout_marginHorizontal="16dp"
             android:layout_marginBottom="32dp" />
-    </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/previewOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#4700457C"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/previewLogoutBtn"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Exit Preview Mode"
+                android:textColor="@android:color/white" />
+        </FrameLayout>
+    </FrameLayout>
 
     <!-- EVENTS VIEW (center hub / focal point) -->
     <LinearLayout
@@ -394,19 +424,23 @@
                     android:layout_height="48dp" />
             </LinearLayout>
 
-            <View
+            <androidx.camera.view.PreviewView
+                android:id="@+id/scannerPreview"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:scaleType="fitCenter"
+                android:background="@android:color/black" />
 
             <!-- Scan prompt -->
             <TextView
+                android:id="@+id/scanHintTv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Tap to launch scanner"
                 android:textAlignment="center"
                 android:textColor="@android:color/white"
-                android:alpha="0.6"
+                android:alpha="0.7"
                 android:textSize="14sp"
                 android:layout_marginBottom="16dp" />
 
@@ -415,6 +449,7 @@
                 style="@style/Widget.Material3.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:layout_gravity="center_horizontal"
                 android:text="Scan QR"
                 android:layout_marginBottom="48dp" />

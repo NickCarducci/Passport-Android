@@ -1,98 +1,98 @@
 [
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/layout_activity_main.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/layout/activity_main.xml"
+        "merged": "com.sayists.passport.app-debug-44:/layout_activity_confirmation.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/layout/activity_confirmation.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/xml_data_extraction_rules.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/xml/data_extraction_rules.xml"
+        "merged": "com.sayists.passport.app-debug-44:/layout_activity_webview.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/layout/activity_webview.xml"
     },
     {
-        "merged": "com.sayists.passport.app-debug-39:/layout_activity_event_detail.xml.flat",
-        "source": "com.sayists.passport.app-main-41:/layout/activity_event_detail.xml"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-xxxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xxxhdpi/ic_launcher_round.webp"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-hdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-mdpi_ic_launcher_round.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-mdpi/ic_launcher_round.webp"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-mdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xxhdpi/ic_launcher_round.webp"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-mdpi/ic_launcher.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xxhdpi_ic_launcher.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xxhdpi/ic_launcher.webp"
+        "merged": "com.sayists.passport.app-debug-44:/menu_main_menu.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/menu/main_menu.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-hdpi_ic_launcher_round.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-hdpi/ic_launcher_round.webp"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-xhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xhdpi_ic_launcher.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xhdpi/ic_launcher.webp"
+        "merged": "com.sayists.passport.app-debug-44:/xml_data_extraction_rules.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/xml/data_extraction_rules.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/layout_activity_confirmation.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/layout/activity_confirmation.xml"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-xhdpi/ic_launcher.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-hdpi_ic_launcher.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-hdpi/ic_launcher.webp"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/drawable_ic_launcher_background.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/drawable/ic_launcher_background.xml"
+        "merged": "com.sayists.passport.app-debug-44:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/drawable/ic_launcher_foreground.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xxxhdpi_ic_launcher.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xxxhdpi/ic_launcher.webp"
+        "merged": "com.sayists.passport.app-debug-44:/drawable-nodpi_scholarweek_logo.png.flat",
+        "source": "com.sayists.passport.app-main-46:/drawable-nodpi/scholarweek_logo.png"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/layout_activity_webview.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/layout/activity_webview.xml"
+        "merged": "com.sayists.passport.app-debug-44:/layout_activity_login.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/layout/activity_login.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/layout_activity_event_detail.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/layout/activity_event_detail.xml"
+        "merged": "com.sayists.passport.app-debug-44:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/drawable/ic_launcher_background.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-mdpi_ic_launcher.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-mdpi/ic_launcher.webp"
+        "merged": "com.sayists.passport.app-debug-44:/xml_backup_rules.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/xml/backup_rules.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/drawable-nodpi_scholarweek_logo.png.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/drawable-nodpi/scholarweek_logo.png"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-xxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/layout_activity_login.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/layout/activity_login.xml"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-hdpi/ic_launcher.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/xml_backup_rules.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/xml/backup_rules.xml"
+        "merged": "com.sayists.passport.app-debug-44:/layout_activity_event_detail.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/layout/activity_event_detail.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-anydpi-v26/ic_launcher_round.xml"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-xxhdpi/ic_launcher.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-xhdpi_ic_launcher_round.webp.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-xhdpi/ic_launcher_round.webp"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-xxxhdpi/ic_launcher.webp"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "com.sayists.passport.app-debug-44:/drawable_scholarweek_logo.png.flat",
+        "source": "com.sayists.passport.app-main-46:/drawable/scholarweek_logo.png"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/menu_main_menu.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/menu/main_menu.xml"
+        "merged": "com.sayists.passport.app-debug-44:/layout_activity_main.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/layout/activity_main.xml"
     },
     {
-        "merged": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-debug-39:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "/Users/nicholascarducci/.gradle/daemon/8.7/com.sayists.passport.app-main-41:/drawable/ic_launcher_foreground.xml"
+        "merged": "com.sayists.passport.app-debug-44:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.sayists.passport.app-main-46:/mipmap-anydpi-v26/ic_launcher.xml"
     }
 ]

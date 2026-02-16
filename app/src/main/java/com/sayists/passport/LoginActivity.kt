@@ -33,7 +33,10 @@ class LoginActivity : AppCompatActivity() {
         previewBtn.setOnClickListener {
             // Temporary TDD Skip
             Toast.makeText(this, "Entering Preview Mode", Toast.LENGTH_SHORT).show()
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .putExtra("previewMode", true)
+            )
             finish()
         }
     }
