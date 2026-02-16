@@ -1,8 +1,20 @@
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
 }
+
+val dateStamp = LocalDate.now().format(DateTimeFormatter.ofPattern("yyMMdd"))
+val buildSequence = System.getenv("RUN_NUMBER")
+    ?: System.getenv("BUILD_NUMBER")
+    ?: System.getenv("GITHUB_RUN_NUMBER")
+    ?: "1"
+val buildNumber = buildSequence.toIntOrNull() ?: 1
+val digits = max(2, buildNumber.toString().length)
+val computedVersionCode = (dateStamp.toInt() * Math.pow(10.0, digits.toDouble()).toInt()) + buildNumber
 
 android {
     namespace = "com.sayists.passport"
@@ -12,7 +24,7 @@ android {
         applicationId = "com.sayists.passport"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
+        versionCode = computedVersionCode
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -34,6 +46,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             signingConfig = signingConfigs.getByName("release")
         }
     }
